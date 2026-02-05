@@ -1,0 +1,748 @@
+// Bootstrap
+// Import Bootstrap SCSS using modern @use syntax
+@use 'bootstrap/scss/bootstrap';
+
+// Custom Variables
+:root {
+  --zambia-green: #007A33;
+  --zambia-green-light: #009944;
+  --zambia-green-dark: #005522;
+  --primary-color: var(--zambia-green);
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+}
+
+// Dark theme
+html[data-theme='dark'] {
+  --bg-color: #1a1a1a;
+  --text-color: #f0f0f0;
+  --card-bg: #2d2d2d;
+  --border-color: #404040;
+  --input-bg: #333333;
+}
+
+html[data-theme='light'] {
+  --bg-color: #ffffff;
+  --text-color: #343a40;
+  --card-bg: #ffffff;
+  --border-color: #e9ecef;
+  --input-bg: #ffffff;
+}
+
+// Custom Classes
+.bg-zambia-green {
+  background-color: var(--zambia-green) !important;
+}
+
+.text-zambia-green {
+  color: var(--zambia-green) !important;
+}
+
+.border-zambia-green {
+  border-color: var(--zambia-green) !important;
+}
+
+.btn-zambia-green {
+  background-color: var(--zambia-green);
+  border-color: var(--zambia-green);
+  color: white;
+
+  &:hover,
+  &:focus {
+    background-color: var(--zambia-green-dark);
+    border-color: var(--zambia-green-dark);
+    color: white;
+  }
+
+  &:active {
+    background-color: var(--zambia-green-dark) !important;
+    border-color: var(--zambia-green-dark) !important;
+  }
+}
+
+// Global Styles
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.6;
+  color: var(--dark-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--zambia-green);
+  text-decoration: none;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--zambia-green-dark);
+  }
+}
+
+// Card Styles
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 12px 12px 0 0 !important;
+}
+
+// Form Styles
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:focus {
+    border-color: var(--zambia-green);
+    box-shadow: 0 0 0 0.2rem rgba(0, 122, 51, 0.25);
+  }
+
+  &.is-invalid {
+    border-color: var(--danger-color);
+
+    &:focus {
+      border-color: var(--danger-color);
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+  }
+}
+
+.form-label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--dark-color);
+}
+
+.btn {
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+  }
+
+  &.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+// Navigation Styles
+.navbar {
+  background-color: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem 0;
+
+  .navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--zambia-green) !important;
+  }
+
+  .navbar-nav .nav-link {
+    font-weight: 500;
+    color: var(--dark-color) !important;
+    margin: 0 0.5rem;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: var(--zambia-green) !important;
+    }
+
+    &.active {
+      color: var(--zambia-green) !important;
+      font-weight: 600;
+    }
+  }
+
+  .btn-outline-zambia-green {
+    border-color: var(--zambia-green);
+    color: var(--zambia-green);
+
+    &:hover {
+      background-color: var(--zambia-green);
+      border-color: var(--zambia-green);
+      color: white;
+    }
+  }
+}
+
+// Hero Section
+.hero-section {
+  background: linear-gradient(135deg, var(--zambia-green) 0%, var(--zambia-green-light) 100%);
+  color: white;
+  padding: 6rem 0;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="50" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="50" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="90" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.1;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+
+    @media (max-width: 768px) {
+      font-size: 2.5rem;
+    }
+  }
+
+  p {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    max-width: 600px;
+  }
+}
+
+// Feature Cards
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .feature-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--zambia-green) 0%, var(--zambia-green-light) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+  }
+
+  p {
+    color: #6c757d;
+    margin-bottom: 0;
+  }
+}
+
+// Stats Section
+.stats-section {
+  background-color: #f8f9fa;
+  padding: 4rem 0;
+
+  .stat-item {
+    text-align: center;
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--zambia-green);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 1.1rem;
+      color: var(--dark-color);
+      font-weight: 500;
+    }
+  }
+}
+
+// Footer Styles
+.footer {
+  background-color: var(--dark-color);
+  color: white;
+  padding: 3rem 0 1rem;
+
+  a {
+    color: #adb5bd;
+    text-decoration: none;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: white;
+    }
+  }
+
+  .footer-brand {
+    color: var(--zambia-green) !important;
+    font-weight: 700;
+    font-size: 1.5rem;
+  }
+
+  h5 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .social-links a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 40px;
+    margin-right: 0.5rem;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: var(--zambia-green);
+      color: white;
+    }
+  }
+}
+
+// Role Cards
+.role-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--zambia-green) !important;
+    background-color: rgba(0, 122, 51, 0.05) !important;
+  }
+}
+
+// Animation Classes
+.fade-in {
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 4rem 0;
+
+    h1 {
+      font-size: 2.2rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+    }
+  }
+
+  .feature-card {
+    margin-bottom: 2rem;
+  }
+
+  .navbar-nav {
+    margin-top: 1rem;
+  }
+
+  .footer {
+    text-align: center;
+
+    .row > div {
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+// Loading Spinner
+.spinner {
+  width: 1rem;
+  height: 1rem;
+}
+
+// Utility Classes
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Custom Scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--zambia-green);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--zambia-green-dark);
+  }
+}
+
+// Dark Mode Styles
+html[data-theme='dark'] {
+  background-color: #1a1a1a;
+  color: #f0f0f0;
+
+  body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+  }
+
+  .card {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #f0f0f0;
+  }
+
+  .card-header {
+    background-color: #252525;
+    border-bottom-color: #404040;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: #333333;
+    border-color: #404040;
+    color: #f0f0f0;
+
+    &:focus {
+      background-color: #333333;
+      border-color: var(--zambia-green);
+      color: #f0f0f0;
+    }
+
+    &::placeholder {
+      color: #999999;
+    }
+  }
+
+  .navbar {
+    background-color: var(--zambia-green) !important;
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8) !important;
+
+      &:hover {
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .dropdown-menu {
+    background-color: #2d2d2d;
+    border-color: #404040;
+
+    .dropdown-item {
+      color: #f0f0f0;
+
+      &:hover,
+      &:focus {
+        background-color: #404040;
+        color: #ffffff;
+      }
+    }
+
+    .dropdown-divider {
+      border-color: #404040;
+    }
+  }
+
+  .btn-outline-secondary {
+    color: #f0f0f0;
+    border-color: #404040;
+
+    &:hover {
+      background-color: #404040;
+      border-color: #404040;
+      color: #f0f0f0;
+    }
+  }
+
+  .table {
+    color: #f0f0f0;
+    border-color: #404040;
+
+    th {
+      border-color: #404040;
+      background-color: #252525;
+    }
+
+    td {
+      border-color: #404040;
+    }
+  }
+
+  .bg-light {
+    background-color: #2d2d2d !important;
+  }
+
+  .text-muted {
+    color: #999999 !important;
+  }
+
+  .divider {
+    color: #404040;
+  }
+}
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--zambia-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--zambia-green-dark);
+}
+
+// Dark Mode Styles
+html[data-theme='dark'],
+html.dark-mode {
+  color-scheme: dark;
+
+  --bs-body-bg: #1a1a1a;
+  --bs-body-color: #e0e0e0;
+  --bs-border-color: #333;
+  --bs-secondary-bg: #2a2a2a;
+  --bs-tertiary-bg: #333;
+}
+
+html[data-theme='dark'] body,
+html.dark-mode body {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .card,
+html.dark-mode .card {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .card-header,
+html.dark-mode .card-header {
+  background-color: #333;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .form-select,
+html.dark-mode .form-control,
+html.dark-mode .form-select {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .form-control:focus,
+html[data-theme='dark'] .form-select:focus,
+html.dark-mode .form-control:focus,
+html.dark-mode .form-select:focus {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: var(--zambia-green);
+  box-shadow: 0 0 0 0.25rem rgba(0, 122, 51, 0.25);
+}
+
+html[data-theme='dark'] .list-group-item,
+html.dark-mode .list-group-item {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .dropdown-menu,
+html.dark-mode .dropdown-menu {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .dropdown-item,
+html.dark-mode .dropdown-item {
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .dropdown-item:hover,
+html[data-theme='dark'] .dropdown-item:focus,
+html.dark-mode .dropdown-item:hover,
+html.dark-mode .dropdown-item:focus {
+  background-color: #333;
+  color: #fff;
+}
+
+html[data-theme='dark'] .navbar-dark,
+html.dark-mode .navbar-dark {
+  background-color: #1a1a1a !important;
+  border-bottom: 1px solid #333;
+}
+
+html[data-theme='dark'] .navbar,
+html.dark-mode .navbar {
+  background-color: #1a1a1a !important;
+}
+
+html[data-theme='dark'] .table,
+html.dark-mode .table {
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .table-dark,
+html.dark-mode .table-dark {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .table-hover tbody tr:hover,
+html.dark-mode .table-hover tbody tr:hover {
+  background-color: #333;
+}
+
+html[data-theme='dark'] .modal-content,
+html.dark-mode .modal-content {
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .modal-header,
+html.dark-mode .modal-header {
+  background-color: #333;
+  border-color: #444;
+}
+
+html[data-theme='dark'] .btn-secondary,
+html.dark-mode .btn-secondary {
+  background-color: #444;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .btn-secondary:hover,
+html.dark-mode .btn-secondary:hover {
+  background-color: #555;
+  border-color: #666;
+}
+
+html[data-theme='dark'] .alert,
+html.dark-mode .alert {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .badge,
+html.dark-mode .badge {
+  background-color: #444;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .pagination .page-link,
+html.dark-mode .pagination .page-link {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+html[data-theme='dark'] .pagination .page-link:hover,
+html.dark-mode .pagination .page-link:hover {
+  background-color: #333;
+  border-color: #444;
+  color: var(--zambia-green);
+}
+
+html[data-theme='dark'] .pagination .page-item.active .page-link,
+html.dark-mode .pagination .page-item.active .page-link {
+  background-color: var(--zambia-green);
+  border-color: var(--zambia-green);
+}
+
+html[data-theme='dark'] .text-muted,
+html.dark-mode .text-muted {
+  color: #999 !important;
+}
+
+html[data-theme='dark'] .border,
+html.dark-mode .border {
+  border-color: #444 !important;
+}
+
+html[data-theme='dark'] hr,
+html.dark-mode hr {
+  border-color: #444;
+  opacity: 1;
+}
+

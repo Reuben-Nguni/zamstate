@@ -1,0 +1,214 @@
+import { Request, Response } from 'express';
+import { Property } from '../models/Property.js';
+import { Booking } from '../models/Booking.js';
+import cloudinary from '../config/cloudinary.js';
+import fs from 'fs';
+
+export const createProperty = async (req: Request, res: Response) => {
+  try {
+    const { title, description, price, currency, type, location, features } = req.body;
+
+    let parsedLocation;
+    try {
+      parsedLocation = JSON.parse(location);
+    } catch {
+      parsedLocation = {};
+    }
+
+    const images = [];
+
+    // Handle image uploads
+    if (req.files && Array.isArray(req.files)) {
+        console.log('Received files:', req.files.map((f: any) => f.path));
+      for (const file of req.files) {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'zamstate/properties',
+            resource_type: 'auto',
+          });
+
+          console.log('Cloudinary result:', result);
+          images.push({
+            url: result.secure_url,
+            publicId: result.public_id,
+          });
+        } catch (uploadError: any) {
+          console.error('Cloudinary upload failed:', uploadError.message);
+          // Continue with other files or skip
+        }
+
+        // Clean up local file
+        fs.unlinkSync(file.path);
+      }
+    }
+
+    const property = new Property({
+      title,
+      description,
+      price,
+      currency,
+      type,
+      location: parsedLocation,
+      features,
+      images,
+      owner: req.userId,
+    });
+
+    await property.save();
+    await property.populate('owner');
+
+    res.status(201).json({
+      message: 'Property created successfully',
+      property,
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getProperties = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 10, type, township, priceMin, priceMax, sortBy } = req.query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const filter: any = {};
+
+    if (type) filter.type = type;
+    if (township) filter['location.township'] = township;
+    if (priceMin || priceMax) {
+      filter.price = {};
+      if (priceMin) filter.price.$gte = Number(priceMin);
+      if (priceMax) filter.price.$lte = Number(priceMax);
+    }
+
+    const sortOptions: any = {};
+    if (sortBy === 'price_asc') sortOptions.price = 1;
+    if (sortBy === 'price_desc') sortOptions.price = -1;
+    if (sortBy === 'date_desc') sortOptions.createdAt = -1;
+    if (sortBy === 'date_asc') sortOptions.createdAt = 1;
+
+    const properties = await Property.find(filter)
+      .populate('owner')
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Property.countDocuments(filter);
+
+    res.json({
+      data: properties,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getPropertyById = async (req: Request, res: Response) => {
+  try {
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('owner agent');
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    res.json(property);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProperty = async (req: Request, res: Response) => {
+  try {
+    const property = await Property.findById(req.params.id);
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    if (property.owner.toString() !== req.userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const updates = req.body;
+
+    // Handle new image uploads
+    if (req.files && Array.isArray(req.files)) {
+      const images = [];
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'zamstate/properties',
+        });
+        images.push({
+          url: result.secure_url,
+          publicId: result.public_id,
+        });
+      }
+
+      // Delete old images
+      if (property.images && property.images.length > 0) {
+        for (const img of property.images) {
+          if (img.publicId) {
+            await cloudinary.uploader.destroy(img.publicId);
+          }
+        }
+      }
+
+      updates.images = images;
+    }
+
+    Object.assign(property, updates);
+    await property.save();
+
+    res.json({ message: 'Property updated', property });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteProperty = async (req: Request, res: Response) => {
+  try {
+    const property = await Property.findById(req.params.id);
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    if (property.owner.toString() !== req.userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Delete images from Cloudinary
+    if (property.images && property.images.length > 0) {
+      for (const img of property.images) {
+        if (img.publicId) {
+          await cloudinary.uploader.destroy(img.publicId);
+        }
+      }
+    }
+
+    await Property.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Property deleted' });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getPropertyBookings = async (req: Request, res: Response) => {
+  try {
+    const bookings = await Booking.find({ property: req.params.id }).populate('tenant');
+    res.json(bookings);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
