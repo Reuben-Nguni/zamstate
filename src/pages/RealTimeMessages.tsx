@@ -17,8 +17,9 @@ const RealTimeMessages: React.FC = () => {
   const socket = useRef<any>(null);
 
   useEffect(() => {
-    // Connect to Socket.IO server
-    socket.current = io('http://localhost:5000');
+    // Connect to Socket.IO server using environment variable
+    const socketUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+    socket.current = io(socketUrl);
 
     socket.current.on('newMessage', (msg: any) => {
       setMessages((prev) => [...prev, msg]);
