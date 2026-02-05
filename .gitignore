@@ -4,9 +4,36 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# Node
+node_modules/
+/.vite/
+dist/
+
+# Build outputs
+/build/
+/public/build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
 pnpm-debug.log*
 lerna-debug.log*
 
+
+# System
+.DS_Store
+
+# Environment
+.env
+.env.*
+
+# Server
+/server/node_modules/
+/server/dist/
+
+# Misc
 node_modules
 dist
 dist-ssr
