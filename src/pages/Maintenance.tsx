@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import apiClient from '../utils/api';
 
 const Maintenance: React.FC = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const mockRequests = [
-    {
-      id: '1',
-      title: 'Leaking faucet in kitchen',
-      category: 'Plumbing',
-      priority: 'high',
-      status: 'in_progress',
-      dateSubmitted: '2024-01-20',
-      description: 'The kitchen faucet has been leaking for the past week. Water pressure is also low.',
-      assignedTo: 'John Plumbing Co.',
-      estimatedCompletion: '2024-01-25'
-    },
-    {
-      id: '2',
-      title: 'AC not cooling properly',
-      category: 'HVAC',
-      priority: 'medium',
-      status: 'pending',
-      dateSubmitted: '2024-01-18',
-      description: 'Air conditioning unit is running but not cooling the apartment effectively.',
-      assignedTo: null,
-      estimatedCompletion: null
-    },
-    {
-      id: '3',
-      title: 'Broken light fixture in hallway',
-      category: 'Electrical',
-      priority: 'low',
-      status: 'completed',
-      dateSubmitted: '2024-01-15',
-      description: 'The hallway light fixture stopped working completely.',
-      assignedTo: 'Spark Electric',
-      estimatedCompletion: '2024-01-17'
-    }
-  ];
+  React.useEffect(() => {
+    const fetchRequests = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Adjust endpoint as needed
+        const response = await apiClient('/maintenance-requests');
+        setRequests(response.requests || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch maintenance requests');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusClasses = {
@@ -60,14 +45,17 @@ const Maintenance: React.FC = () => {
     return `badge ${priorityClasses[priority as keyof typeof priorityClasses] || 'bg-secondary'}`;
   };
 
-  const filteredRequests = mockRequests.filter(request => {
+  const filteredRequests = requests.filter(request => {
     if (activeTab === 'active') return request.status === 'pending' || request.status === 'in_progress';
     if (activeTab === 'completed') return request.status === 'completed';
+    if (activeTab === 'cancelled') return request.status === 'cancelled';
     return true;
   });
 
   return (
     <div className="maintenance-page">
+      {loading && <div>Loading maintenance requests...</div>}
+      {error && <div className="text-danger">{error}</div>}
       <div className="container-fluid py-4">
         {/* Header */}
         <div className="row mb-4">

@@ -53,8 +53,11 @@ export const useAuthStore = create<AuthStore>()(
           isLoading: false,
           error: null,
         });
-        // Clear token from localStorage
+        // Clear all auth data from localStorage
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth-storage');
+        // Force page reload to clear any cached state
+        window.location.href = '/';
       },
 
       updateUser: (userData: Partial<User>) => {

@@ -16,8 +16,9 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Properties from './pages/Properties';
 import PropertyAdd from './pages/PropertyAdd';
+import PropertyDetail from './pages/PropertyDetail';
 import Bookings from './pages/Bookings';
-import Messages from './pages/Messages';
+import RealTimeMessages from './pages/RealTimeMessages';
 import Maintenance from './pages/Maintenance';
 import Analytics from './pages/Analytics';
 
@@ -56,7 +57,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/properties" element={<Properties />} />
+<Route path="/properties" element={<Properties />} />
+              <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route
                 path="/properties/add"
                 element={
@@ -77,7 +79,7 @@ function App() {
                 path="/messages"
                 element={
                   <ProtectedRoute>
-                    <Messages />
+                    <RealTimeMessages />
                   </ProtectedRoute>
                 }
               />

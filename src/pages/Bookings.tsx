@@ -1,38 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import apiClient from '../utils/api';
 
 const Bookings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const mockBookings = [
-    {
-      id: '1',
-      property: 'Modern 3BR Apartment in Kabulonga',
-      date: '2024-01-25',
-      time: '14:00',
-      status: 'confirmed',
-      agent: 'John Smith',
-      type: 'viewing'
-    },
-    {
-      id: '2',
-      property: 'Luxury Villa in Ibex Hill',
-      date: '2024-01-28',
-      time: '10:30',
-      status: 'pending',
-      agent: 'Sarah Johnson',
-      type: 'viewing'
-    },
-    {
-      id: '3',
-      property: 'Commercial Space in Arcades',
-      date: '2024-01-20',
-      time: '16:00',
-      status: 'completed',
-      agent: 'Mike Wilson',
-      type: 'meeting'
-    }
-  ];
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Adjust endpoint as needed
+        const response = await apiClient('/bookings');
+        setBookings(response.bookings || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch bookings');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusClasses = {
@@ -44,7 +35,7 @@ const Bookings: React.FC = () => {
     return `badge ${statusClasses[status as keyof typeof statusClasses] || 'bg-secondary'}`;
   };
 
-  const filteredBookings = mockBookings.filter(booking => {
+  const filteredBookings = bookings.filter(booking => {
     if (activeTab === 'upcoming') return booking.status === 'confirmed' || booking.status === 'pending';
     if (activeTab === 'past') return booking.status === 'completed' || booking.status === 'cancelled';
     return true;
@@ -53,6 +44,8 @@ const Bookings: React.FC = () => {
   return (
     <div className="bookings-page">
       <div className="container-fluid py-4">
+        {loading && <div>Loading bookings...</div>}
+        {error && <div className="text-danger">{error}</div>}
         {/* Header */}
         <div className="row mb-4">
           <div className="col-12">

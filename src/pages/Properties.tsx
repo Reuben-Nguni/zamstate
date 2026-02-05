@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { propertyService, messageService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
@@ -18,8 +18,12 @@ const Properties: React.FC = () => {
   const [contactModal, setContactModal] = useState<{ show: boolean; property: any }>({ show: false, property: null });
   const [messageContent, setMessageContent] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  
+  // Modal for login prompt when guest tries to contact/book
+  const [loginPromptModal, setLoginPromptModal] = useState<{ show: boolean; action: string }>({ show: false, action: '' });
 
   const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleSendMessage = async () => {
     if (!contactModal.property || !messageContent.trim()) return;
@@ -39,6 +43,17 @@ const Properties: React.FC = () => {
     } finally {
       setSendingMessage(false);
     }
+  };
+
+  // Handle guest actions (contact/book viewing) - show login prompt
+  const handleGuestAction = (action: string) => {
+    setLoginPromptModal({ show: true, action });
+  };
+
+  // Navigate to login/register
+  const handleLoginClick = (path: string) => {
+    setLoginPromptModal({ show: false, action: '' });
+    navigate(path);
   };
 
   useEffect(() => {
@@ -132,23 +147,34 @@ const Properties: React.FC = () => {
               {property.township}
             </small>
             <div className="btn-group btn-group-sm">
-              <button className="btn btn-outline-primary btn-sm">
+<Link to={`/properties/${property._id || property.id}`} className="btn btn-outline-primary btn-sm">
                 <i className="fas fa-eye me-1"></i>View
-              </button>
-              {isAuthenticated && (
+              </Link>
+              {isAuthenticated ? (
                 <button 
                   className="btn btn-outline-info btn-sm"
                   onClick={() => setContactModal({ show: true, property })}
                 >
                   <i className="fas fa-envelope me-1"></i>Contact
                 </button>
+              ) : (
+                <button 
+                  className="btn btn-outline-info btn-sm"
+                  onClick={() => handleGuestAction('contact')}
+                >
+                  <i className="fas fa-envelope me-1"></i>Contact
+                </button>
               )}
-              <button className="btn btn-outline-secondary btn-sm">
-                <i className="fas fa-edit"></i>
-              </button>
-              <button className="btn btn-outline-danger btn-sm">
-                <i className="fas fa-trash"></i>
-              </button>
+              {isAuthenticated && (
+                <>
+                  <button className="btn btn-outline-secondary btn-sm">
+                    <i className="fas fa-edit"></i>
+                  </button>
+                  <button className="btn btn-outline-danger btn-sm">
+                    <i className="fas fa-trash"></i>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -209,24 +235,47 @@ const Properties: React.FC = () => {
               </div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="btn-group">
-                  <button className="btn btn-outline-primary btn-sm">
+<Link to={`/properties/${property._id || property.id}`} className="btn btn-outline-primary btn-sm">
                     <i className="fas fa-eye me-1"></i>View
-                  </button>
-                  <button className="btn btn-outline-success btn-sm">
-                    <i className="fas fa-calendar-plus me-1"></i>Book Viewing
-                  </button>
-                  <button className="btn btn-outline-info btn-sm">
-                    <i className="fas fa-envelope me-1"></i>Contact
-                  </button>
+                  </Link>
+                  {isAuthenticated ? (
+                    <button className="btn btn-outline-success btn-sm">
+                      <i className="fas fa-calendar-plus me-1"></i>Book Viewing
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-outline-success btn-sm"
+                      onClick={() => handleGuestAction('book')}
+                    >
+                      <i className="fas fa-calendar-plus me-1"></i>Book Viewing
+                    </button>
+                  )}
+                  {isAuthenticated ? (
+                    <button 
+                      className="btn btn-outline-info btn-sm"
+                      onClick={() => setContactModal({ show: true, property })}
+                    >
+                      <i className="fas fa-envelope me-1"></i>Contact
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-outline-info btn-sm"
+                      onClick={() => handleGuestAction('contact')}
+                    >
+                      <i className="fas fa-envelope me-1"></i>Contact
+                    </button>
+                  )}
                 </div>
-                <div className="btn-group btn-group-sm">
-                  <button className="btn btn-outline-secondary">
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button className="btn btn-outline-danger">
-                    <i className="fas fa-trash"></i>
-                  </button>
-                </div>
+                {isAuthenticated && (
+                  <div className="btn-group btn-group-sm">
+                    <button className="btn btn-outline-secondary">
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button className="btn btn-outline-danger">
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -250,15 +299,19 @@ const Properties: React.FC = () => {
               <div>
                 <h1 className="h2 mb-1">Properties</h1>
                 <p className="text-muted mb-0">
-                  Manage your property listings and discover new opportunities.
+                  {isAuthenticated 
+                    ? 'Manage your property listings and discover new opportunities.'
+                    : 'Discover properties across Zambia. Find your perfect home or business space.'}
                 </p>
               </div>
-              <div className="d-flex gap-2">
-                <Link to="/properties/add" className="btn btn-zambia-green">
-                  <i className="fas fa-plus me-2"></i>
-                  Add Property
-                </Link>
-              </div>
+              {isAuthenticated && (
+                <div className="d-flex gap-2">
+                  <Link to="/properties/add" className="btn btn-zambia-green">
+                    <i className="fas fa-plus me-2"></i>
+                    Add Property
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -374,18 +427,20 @@ const Properties: React.FC = () => {
               <div className="text-center py-5">
                 <i className="fas fa-home fa-3x text-muted mb-3"></i>
                 <h4 className="text-muted">No properties found</h4>
-                <p className="text-muted">Try adjusting your search criteria or add a new property.</p>
-                <Link to="/properties/add" className="btn btn-zambia-green">
-                  <i className="fas fa-plus me-2"></i>
-                  Add Property
-                </Link>
+                <p className="text-muted">Try adjusting your search criteria.</p>
+                {isAuthenticated && (
+                  <Link to="/properties/add" className="btn btn-zambia-green">
+                    <i className="fas fa-plus me-2"></i>
+                    Add Property
+                  </Link>
+                )}
               </div>
             </div>
           )}
         </motion.div>
       </div>
 
-      {/* Contact Modal */}
+      {/* Contact Modal for Authenticated Users */}
       {contactModal.show && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog">
@@ -432,8 +487,67 @@ const Properties: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Login Prompt Modal for Guests */}
+      {loginPromptModal.show && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">
+                  <i className="fas fa-user-lock me-2"></i>
+                  {loginPromptModal.action === 'book' ? 'Book a Viewing' : 'Contact Property Owner'}
+                </h5>
+                <button 
+                  type="button" 
+                  className="btn-close btn-close-white" 
+                  onClick={() => setLoginPromptModal({ show: false, action: '' })}
+                ></button>
+              </div>
+              <div className="modal-body text-center py-4">
+                <i className="fas fa-user-circle fa-4x text-muted mb-3"></i>
+                <h5 className="mb-3">Please sign in to continue</h5>
+                <p className="text-muted">
+                  {loginPromptModal.action === 'book' 
+                    ? 'To book a property viewing, you need to have an account with ZAMSTATE.'
+                    : 'To contact property owners, you need to have an account with ZAMSTATE.'}
+                </p>
+                <p className="text-muted">
+                  Don't have an account? Join thousands of Zambians finding their perfect property!
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setLoginPromptModal({ show: false, action: '' })}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-outline-primary" 
+                  onClick={() => handleLoginClick('/login')}
+                >
+                  <i className="fas fa-sign-in-alt me-2"></i>
+                  Sign In
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={() => handleLoginClick('/register')}
+                >
+                  <i className="fas fa-user-plus me-2"></i>
+                  Create Account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Properties;
+

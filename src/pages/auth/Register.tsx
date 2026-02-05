@@ -45,18 +45,7 @@ const Register: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const response = await authService.register(data);
-      
-      const mockUser = {
-        id: response.user.id,
-        email: response.user.email,
-        firstName: response.user.firstName,
-        lastName: response.user.lastName,
-        phone: data.phone,
-        role: response.user.role as any,
-        isVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      login(response.user, response.token);
 
       login(mockUser, response.token);
       toast.success('Registration successful! Welcome to ZAMSTATE');

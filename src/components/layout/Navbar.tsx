@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
@@ -15,10 +16,6 @@ const Navbar: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
@@ -29,16 +26,25 @@ const Navbar: React.FC = () => {
         <>
           <li className="nav-item">
             <Link className="nav-link" to="/" onClick={closeMenu}>
+              <i className="fas fa-home me-1"></i>
               Home
             </Link>
           </li>
           <li className="nav-item">
+            <Link className="nav-link" to="/properties" onClick={closeMenu}>
+              <i className="fas fa-building me-1"></i>
+              Properties
+            </Link>
+          </li>
+          <li className="nav-item">
             <Link className="nav-link" to="/login" onClick={closeMenu}>
+              <i className="fas fa-sign-in-alt me-1"></i>
               Login
             </Link>
           </li>
           <li className="nav-item">
-            <Link className="nav-link" to="/register" onClick={closeMenu}>
+            <Link className="btn btn-zambia-green text-white ms-lg-2 mt-2 mt-lg-0" to="/register" onClick={closeMenu} style={{ padding: '0.5rem 1rem', borderRadius: '6px' }}>
+              <i className="fas fa-user-plus me-1"></i>
               Register
             </Link>
           </li>
@@ -50,21 +56,25 @@ const Navbar: React.FC = () => {
       <>
         <li className="nav-item">
           <Link className="nav-link" to="/dashboard" onClick={closeMenu}>
+            <i className="fas fa-tachometer-alt me-1"></i>
             Dashboard
           </Link>
         </li>
         <li className="nav-item">
           <Link className="nav-link" to="/properties" onClick={closeMenu}>
+            <i className="fas fa-building me-1"></i>
             Properties
           </Link>
         </li>
         <li className="nav-item">
           <Link className="nav-link" to="/bookings" onClick={closeMenu}>
+            <i className="fas fa-calendar-check me-1"></i>
             Bookings
           </Link>
         </li>
         <li className="nav-item">
           <Link className="nav-link" to="/messages" onClick={closeMenu}>
+            <i className="fas fa-comments me-1"></i>
             Messages
           </Link>
         </li>
@@ -77,6 +87,7 @@ const Navbar: React.FC = () => {
       roleLinks.push(
         <li className="nav-item" key="maintenance">
           <Link className="nav-link" to="/maintenance" onClick={closeMenu}>
+            <i className="fas fa-tools me-1"></i>
             Maintenance
           </Link>
         </li>
@@ -87,6 +98,7 @@ const Navbar: React.FC = () => {
       roleLinks.push(
         <li className="nav-item" key="analytics">
           <Link className="nav-link" to="/analytics" onClick={closeMenu}>
+            <i className="fas fa-chart-line me-1"></i>
             Analytics
           </Link>
         </li>
@@ -106,11 +118,17 @@ const Navbar: React.FC = () => {
   const textClass = isDark ? 'text-white' : 'text-dark';
 
   return (
-    <nav className={`navbar navbar-expand-lg ${navbarClass} shadow-sm`} style={{ borderBottom: '3px solid var(--zambia-green)' }}>
+    <nav 
+      className={`navbar navbar-expand-lg ${navbarClass} shadow-sm`}
+      style={{ 
+        borderBottom: '3px solid var(--zambia-green)',
+        zIndex: 1000
+      }}
+    >
       <div className="container-fluid">
-        {/* Brand */}
+        {/* Brand - Left side */}
         <Link 
-          className={`navbar-brand d-flex align-items-center fw-bold fs-5 ${textClass}`} 
+          className={`navbar-brand d-flex align-items-center fw-bold fs-5 ${textClass}`}
           to={isAuthenticated ? "/dashboard" : "/"}
           onClick={closeMenu}
         >
@@ -120,150 +138,117 @@ const Navbar: React.FC = () => {
           ZAMSTATE
         </Link>
 
-        {/* Flex container for right-side buttons */}
-        <div className="d-flex align-items-center gap-3 ms-auto">
-          {/* Theme Toggle Button - Professional Style */}
-          <button
-            className="btn p-0 border-0"
-            onClick={toggleTheme}
-            title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-            style={{ 
-              background: 'linear-gradient(90deg, #FFD700 50%, #1F2937 50%)',
-              width: '60px',
-              height: '44px',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: isDark ? 'flex-end' : 'flex-start',
-              padding: '4px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-            }}
-          >
-            <div 
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '4px',
-                backgroundColor: isDark ? '#1F2937' : '#FFD700',
-                transition: 'all 0.3s ease'
-              }}
-            />
-          </button>
-
-          {/* Mobile Hamburger Menu Button - ONLY ON SMALL SCREENS */}
-          <button
-            className={`btn p-2 d-lg-none`}
-            type="button"
-            onClick={toggleMenu}
-            aria-controls="navbarNav"
-            aria-expanded={isMenuOpen}
-            aria-label="Toggle navigation"
-            style={{ 
-              fontSize: '24px',
-              color: isDark ? 'white' : 'var(--zambia-green)',
-              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--zambia-green)',
-              border: isDark ? '2px solid var(--zambia-green)' : 'none',
-              width: '50px',
-              height: '50px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 !important',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {isMenuOpen ? (
-              <i className="fas fa-times"></i>
-            ) : (
-              <i className="fas fa-bars"></i>
-            )}
-          </button>
-        </div>
-
-        {/* Navigation menu - Mobile collapsible only */}
-        <div 
-          className={`collapse navbar-collapse d-lg-none ${isMenuOpen ? 'show' : ''}`} 
-          id="navbarNav" 
-          style={{ 
-            marginTop: isMenuOpen ? '15px' : '0',
-            backgroundColor: isDark ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.02)',
-            padding: isMenuOpen ? '10px 12px' : '0',
-            borderRadius: isMenuOpen ? '8px' : '0',
-            marginLeft: '-12px',
-            marginRight: '-12px',
+        {/* Mobile Hamburger Menu Button */}
+        <button
+          className={`navbar-toggler ${isDark ? 'border-white' : ''}`}
+          type="button"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-controls="navbarNav"
+          aria-expanded={isMenuOpen}
+          aria-label="Toggle navigation"
+          style={{
+            padding: '0.5rem',
+            borderRadius: '8px'
           }}
         >
-          <ul className={`navbar-nav me-auto ${isDark ? 'text-white' : 'text-dark'}`}>
+          <span className={`navbar-toggler-icon ${isDark ? 'navbar-toggler-icon-white' : ''}`}></span>
+        </button>
+
+        {/* Navigation Links - Collapsible */}
+        <div 
+          className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`}
+          id="navbarNav"
+        >
+          <ul className={`navbar-nav ${isDark ? 'me-auto text-white' : 'me-auto'} align-items-lg-center`}>
             {getNavLinks()}
           </ul>
+          
+          {/* Right side - Theme Toggle and User Actions (inside collapsible on mobile) */}
+          <div className={`d-flex align-items-center gap-2 ${isDark ? 'text-white' : ''} mt-3 mt-lg-0`}>
+            {/* Theme Toggle Button with Sun/Moon Icons */}
+            <button
+              className={`btn d-flex align-items-center justify-content-center ${isDark ? 'text-warning' : 'text-primary'}`}
+              onClick={toggleTheme}
+              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              style={{ 
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                backgroundColor: isDark ? 'rgba(255, 215, 0, 0.15)' : 'rgba(31, 41, 55, 0.1)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                fontSize: '20px'
+              }}
+            >
+              {isDark ? (
+                <i className="fas fa-moon"></i>
+              ) : (
+                <i className="fas fa-sun"></i>
+              )}
+            </button>
 
-          {/* User menu - Only visible when authenticated */}
-          {isAuthenticated && user && (
-            <ul className={`navbar-nav mt-3 mt-lg-0 ${isDark ? 'text-white' : 'text-dark'}`}>
-              <li className="nav-item dropdown">
-                <a
-                  className={`nav-link dropdown-toggle d-flex align-items-center ${textClass}`}
-                  href="#"
-                  id="userDropdown"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                  style={{ cursor: 'pointer', textDecoration: 'none' }}
+            {/* User dropdown - Only visible when authenticated */}
+            {isAuthenticated && user && (
+              <div className="dropdown" style={{ position: 'relative' }}>
+                <button
+                  className={`btn d-flex align-items-center gap-2 ${textClass}`}
+                  type="button"
+                  onClick={() => setIsMenuOpen(prev => !prev)}
+                  style={{ 
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none'
+                  }}
                 >
-                  <div className="bg-zambia-green rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', minWidth: '36px' }}>
+                  <div className="bg-zambia-green rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', minWidth: '36px' }}>
                     <i className="fas fa-user text-white" style={{ fontSize: '14px' }}></i>
                   </div>
-                  <div className="d-none d-md-block">
-                    <div className="fw-semibold" style={{ fontSize: '14px', lineHeight: '1.2' }}>{user.firstName}</div>
-                    <small className={isDark ? 'text-secondary text-capitalize' : 'text-muted text-capitalize'} style={{ fontSize: '12px' }}>{user.role}</small>
-                  </div>
-                </a>
-                <ul 
-                  className={`dropdown-menu ${isDark ? 'bg-dark' : 'bg-light'}`}
-                  aria-labelledby="userDropdown"
-                  style={{ minWidth: '200px' }}
-                >
-                  <li>
-                    <Link 
-                      className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
-                      to="/profile"
-                      onClick={closeMenu}
-                      style={{ padding: '10px 16px' }}
-                    >
-                      <i className="fas fa-user-circle me-2"></i>
-                      Profile
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
-                      to="/settings"
-                      onClick={closeMenu}
-                      style={{ padding: '10px 16px' }}
-                    >
-                      <i className="fas fa-cog me-2"></i>
-                      Settings
-                    </Link>
-                  </li>
-                  <li><hr className={`dropdown-divider ${isDark ? 'border-secondary' : 'border-light'}`} style={{ margin: '8px 0' }} /></li>
-                  <li>
-                    <button 
-                      className={`dropdown-item text-danger w-100 text-start`}
-                      onClick={handleLogout}
-                      style={{ padding: '10px 16px', border: 'none', background: 'none' }}
-                    >
-                      <i className="fas fa-sign-out-alt me-2"></i>
-                      Logout
-                    </button>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          )}
+                  <span className="d-none d-lg-inline fw-semibold">{user.firstName}</span>
+                  <i className="fas fa-chevron-down ms-2"></i>
+                </button>
+                {isMenuOpen && (
+                  <ul 
+                    className={`dropdown-menu dropdown-menu-end show ${isDark ? 'bg-dark' : 'bg-light'}`}
+                    style={{ minWidth: '200px', position: 'absolute', top: '100%', right: 0, zIndex: 2000 }}
+                  >
+                    <li>
+                      <Link 
+                        className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
+                        to="/profile"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <i className="fas fa-user-circle me-2"></i>
+                        Profile
+                      </Link>
+                    </li>
+                    <li>
+                      <Link 
+                        className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
+                        to="/settings"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <i className="fas fa-cog me-2"></i>
+                        Settings
+                      </Link>
+                    </li>
+                    <li><hr className={`dropdown-divider ${isDark ? 'border-secondary' : 'border-light'}`} /></li>
+                    <li>
+                      <button 
+                        className={`dropdown-item text-danger w-100 text-start`}
+                        onClick={handleLogout}
+                        style={{ padding: '10px 16px', border: 'none', background: 'none' }}
+                      >
+                        <i className="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>
@@ -271,3 +256,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

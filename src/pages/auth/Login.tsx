@@ -36,20 +36,7 @@ const Login: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await authService.login(data.email, data.password);
-      
-      const mockUser = {
-        id: response.user.id,
-        email: response.user.email,
-        firstName: response.user.firstName,
-        lastName: response.user.lastName,
-        phone: response.user.phone,
-        role: response.user.role as any,
-        isVerified: response.user.isVerified,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      login(mockUser, response.token);
+      login(response.user, response.token);
       toast.success('Login successful!');
       navigate(from, { replace: true });
     } catch (error: any) {
