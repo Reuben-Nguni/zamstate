@@ -46,8 +46,6 @@ const Register: React.FC = () => {
       setError(null);
       const response = await authService.register(data);
       login(response.user, response.token);
-
-      login(mockUser, response.token);
       toast.success('Registration successful! Welcome to ZAMSTATE');
       navigate('/dashboard');
     } catch (error: any) {

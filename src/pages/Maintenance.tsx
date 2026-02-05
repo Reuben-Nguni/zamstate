@@ -209,7 +209,7 @@ const Maintenance: React.FC = () => {
                               <div className="col-md-3">
                                 <div className="mb-2">
                                   <span className={getStatusBadge(request.status)}>
-                                    {request.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    {request.status.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                                   </span>
                                 </div>
                                 <div>

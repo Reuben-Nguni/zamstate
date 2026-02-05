@@ -6,12 +6,12 @@ import { io } from 'socket.io-client';
 
 const RealTimeMessages: React.FC = () => {
   const { user } = useAuthStore();
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Placeholder for socket instance
   const socket = useRef<any>(null);
@@ -72,7 +72,10 @@ const RealTimeMessages: React.FC = () => {
     if (!newMessage.trim() || !selectedConversation) return;
     try {
       // Send message via API
-      await messageService.sendMessage(selectedConversation.id, newMessage);
+      await messageService.sendMessage({
+        conversationId: selectedConversation.id,
+        content: newMessage,
+      });
       // Emit via socket for real-time update
       socket.current.emit('sendMessage', {
         conversationId: selectedConversation.id,
@@ -102,7 +105,8 @@ const RealTimeMessages: React.FC = () => {
     e.preventDefault();
     if (!editingMessage) return;
     try {
-      await messageService.updateMessage(editingMessage.id, editContent);
+      // Comment out until backend implements update
+      // await messageService.updateMessage?.(editingMessage.id, editContent);
       socket.current.emit('updateMessage', {
         id: editingMessage.id,
         content: editContent,
@@ -119,7 +123,8 @@ const RealTimeMessages: React.FC = () => {
 
   const handleDeleteMessage = async (id: string) => {
     try {
-      await messageService.deleteMessage(id);
+      // Comment out until backend implements delete
+      // await messageService.deleteMessage?.(id);
       socket.current.emit('deleteMessage', { id });
       // Optionally refetch messages
       if (selectedConversation) {
@@ -133,9 +138,9 @@ const RealTimeMessages: React.FC = () => {
     <div className="realtime-messages-page">
       <div className="sidebar">
         <h3>Conversations</h3>
-        {loading ? <div>Loading...</div> : conversations.map((conv) => (
+        {loading ? <div>Loading...</div> : conversations.map((conv: any) => (
           <div key={conv.id} onClick={() => setSelectedConversation(conv)} className={selectedConversation?.id === conv.id ? 'active' : ''}>
-            {conv.participants.map(p => p.firstName).join(', ')}
+            {conv.participants.map((p: any) => p.firstName).join(', ')}
           </div>
         ))}
       </div>
@@ -143,10 +148,10 @@ const RealTimeMessages: React.FC = () => {
         {selectedConversation ? (
           <>
             <div className="messages-list">
-              {messages.map((msg) => (
-                <div key={msg.id} className={msg.sender.id === user.id ? 'sent' : 'received'} style={{ position: 'relative', marginBottom: '8px' }}>
+              {messages.map((msg: any) => (
+                <div key={msg.id} className={msg.sender.id === user?.id ? 'sent' : 'received'} style={{ position: 'relative', marginBottom: '8px' }}>
                   <span>{msg.sender.firstName}: </span>{msg.content}
-                  {msg.sender.id === user.id && (
+                  {msg.sender.id === user?.id && (
                     <span style={{ position: 'absolute', right: 0, top: 0 }}>
                       <button style={{ marginRight: 4 }} onClick={() => handleEditMessage(msg)}>Edit</button>
                       <button style={{ color: 'red' }} onClick={() => handleDeleteMessage(msg.id)}>Delete</button>

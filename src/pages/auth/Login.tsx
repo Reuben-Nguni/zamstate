@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../utils/api';
-import Loader from '../../components/common/Loader';
 import type { LoginForm } from '../../types';
 
 const loginSchema = z.object({
@@ -18,7 +17,7 @@ const loginSchema = z.object({
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, setError, isLoading: storeIsLoading } = useAuthStore();
+  const { login, setError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

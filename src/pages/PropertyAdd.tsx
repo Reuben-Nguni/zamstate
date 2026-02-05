@@ -38,7 +38,7 @@ const PropertyAdd: React.FC = () => {
         Array.from(files).forEach((file) => formData.append('images', file));
       }
 
-      const res = await propertyService.createProperty(formData);
+      await propertyService.createProperty(formData);
       toast.success('Property created');
       navigate(`/properties`);
     } catch (err: any) {
