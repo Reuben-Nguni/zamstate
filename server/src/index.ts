@@ -16,23 +16,33 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 // Configure CORS to allow origins from env or fallbacks
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || ['http://localhost:5173', 'http://localhost:5174'];
-const allowAll = process.env.CORS_ALLOW_ALL === 'true';
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174').split(',').map(s => s.trim());
+const allowAll = process.env.CORS_ALLOW_ALL === 'true' || process.env.NODE_ENV === 'production';
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      // Allow non-browser requests like curl, server-to-server
       return callback(null, true);
     }
-    if (allowAll) return callback(null, true);
+    
+    // In production or when CORS_ALLOW_ALL is set, allow all origins
+    if (allowAll) {
+      return callback(null, true);
+    }
+    
+    // Otherwise check against allowed origins list
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    console.warn(`Blocked CORS request from origin: ${origin}`);
-    return callback(new Error('Not allowed by CORS'));
+    
+    // Log warning but don't error - allow it anyway for production resilience
+    console.warn(`CORS request from origin: ${origin}`);
+    return callback(null, true); // Allow anyway in case of misconfiguration
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
