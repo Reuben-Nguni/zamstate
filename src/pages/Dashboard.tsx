@@ -1,10 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
+import { propertyService } from '../utils/api';
+import apiClient from '../utils/api';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const [stats, setStats] = useState({
+    totalProperties: 0,
+    activeBookings: 0,
+    monthlyRevenue: 0,
+    unreadMessages: 0,
+  });
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Fetch properties count
+        const propertiesRes = await propertyService.getProperties({ limit: 1 });
+        const totalProperties = propertiesRes.pagination?.total || 0;
+
+        // Fetch bookings count
+        const bookingsRes = await apiClient('/bookings');
+        const activeBookings = (bookingsRes.bookings || []).filter(
+          (b: any) => b.status === 'confirmed' || b.status === 'pending'
+        ).length;
+
+        // Fetch unread messages count (if available)
+        const messagesRes = await apiClient('/messages/conversations');
+        const unreadMessages = (messagesRes.conversations || []).filter(
+          (c: any) => c.unreadCount > 0
+        ).length;
+
+        // Set stats
+        setStats({
+          totalProperties,
+          activeBookings,
+          monthlyRevenue: 45000, // placeholder - would need actual revenue API
+          unreadMessages,
+        });
+
+        // Fetch recent activities
+        const activitiesRes = await apiClient('/bookings');
+        const mockActivities = [
+          {
+            type: 'booking',
+            message: `You have ${activeBookings} active bookings`,
+            time: 'Just now',
+            icon: 'fas fa-calendar-plus',
+          },
+          ...((activitiesRes.bookings || []).slice(0, 3).map((b: any) => ({
+            type: 'booking',
+            message: `Booking for "${b.property?.title || 'Property'}" - ${b.status}`,
+            time: new Date(b.createdAt).toLocaleDateString(),
+            icon: 'fas fa-calendar-check',
+          })) || []),
+        ];
+        setRecentActivities(mockActivities);
+      } catch (err: any) {
+        console.warn('Failed to fetch dashboard data:', err.message);
+        // Fallback to default state
+        setRecentActivities([
+          {
+            type: 'booking',
+            message: 'Welcome to your dashboard',
+            time: 'Just now',
+            icon: 'fas fa-home',
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const getDashboardCards = () => {
     const baseCards = [
@@ -60,38 +134,20 @@ const Dashboard: React.FC = () => {
     return baseCards;
   };
 
-  const recentActivities = [
+  const recentActivityList = recentActivities.length > 0 ? recentActivities : [
     {
       type: 'booking',
-      message: 'New booking request for "Modern Apartment in Lusaka"',
-      time: '2 hours ago',
-      icon: 'fas fa-calendar-plus',
-    },
-    {
-      type: 'message',
-      message: 'John Doe sent you a message about property viewing',
-      time: '4 hours ago',
-      icon: 'fas fa-envelope',
-    },
-    {
-      type: 'payment',
-      message: 'Rent payment received for "Riverside Villa"',
-      time: '1 day ago',
-      icon: 'fas fa-money-bill-wave',
-    },
-    {
-      type: 'maintenance',
-      message: 'Maintenance request completed for "Office Space CBD"',
-      time: '2 days ago',
-      icon: 'fas fa-check-circle',
+      message: 'Welcome to your dashboard',
+      time: 'Just now',
+      icon: 'fas fa-home',
     },
   ];
 
   const quickStats = [
-    { label: 'Total Properties', value: '12', change: '+2', trend: 'up' },
-    { label: 'Active Bookings', value: '8', change: '+3', trend: 'up' },
-    { label: 'Monthly Revenue', value: 'ZK 45,000', change: '+12%', trend: 'up' },
-    { label: 'Messages', value: '24', change: '-5', trend: 'down' },
+    { label: 'Total Properties', value: stats.totalProperties, change: '+2', trend: 'up' },
+    { label: 'Active Bookings', value: stats.activeBookings, change: '+3', trend: 'up' },
+    { label: 'Monthly Revenue', value: `ZK ${stats.monthlyRevenue.toLocaleString()}`, change: '+12%', trend: 'up' },
+    { label: 'Messages', value: stats.unreadMessages, change: '-5', trend: 'down' },
   ];
 
   return (
@@ -200,8 +256,15 @@ const Dashboard: React.FC = () => {
                 </h5>
               </div>
               <div className="card-body p-0">
-                <div className="list-group list-group-flush">
-                  {recentActivities.map((activity, index) => (
+                {loading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : recentActivityList.length > 0 ? (
+                  <div className="list-group list-group-flush">
+                    {recentActivityList.map((activity, index) => (
                     <div key={index} className="list-group-item px-4 py-3">
                       <div className="d-flex align-items-start">
                         <div className={`bg-${activity.type === 'booking' ? 'success' : activity.type === 'message' ? 'info' : activity.type === 'payment' ? 'primary' : 'warning'} bg-opacity-10 p-2 rounded me-3`}>
@@ -215,7 +278,12 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-muted">No recent activity</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

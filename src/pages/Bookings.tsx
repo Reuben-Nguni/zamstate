@@ -13,11 +13,15 @@ const Bookings: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // Adjust endpoint as needed
+        // Fetch bookings from the API
         const response = await apiClient('/bookings');
-        setBookings(response.bookings || []);
+        const bookingsList = response.bookings || [];
+        setBookings(bookingsList);
       } catch (err: any) {
+        console.warn('Failed to fetch bookings:', err.message);
         setError(err.message || 'Failed to fetch bookings');
+        // Continue with empty state
+        setBookings([]);
       } finally {
         setLoading(false);
       }
@@ -70,7 +74,7 @@ const Bookings: React.FC = () => {
                 <div className="text-zambia-green mb-2">
                   <i className="fas fa-calendar-check fa-2x"></i>
                 </div>
-                <h4 className="mb-1">12</h4>
+                <h4 className="mb-1">{bookings.length}</h4>
                 <small className="text-muted">Total Bookings</small>
               </div>
             </div>
@@ -81,7 +85,7 @@ const Bookings: React.FC = () => {
                 <div className="text-success mb-2">
                   <i className="fas fa-clock fa-2x"></i>
                 </div>
-                <h4 className="mb-1">8</h4>
+                <h4 className="mb-1">{bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').length}</h4>
                 <small className="text-muted">Upcoming</small>
               </div>
             </div>
@@ -92,7 +96,7 @@ const Bookings: React.FC = () => {
                 <div className="text-warning mb-2">
                   <i className="fas fa-hourglass-half fa-2x"></i>
                 </div>
-                <h4 className="mb-1">3</h4>
+                <h4 className="mb-1">{bookings.filter(b => b.status === 'pending').length}</h4>
                 <small className="text-muted">Pending</small>
               </div>
             </div>
@@ -103,7 +107,7 @@ const Bookings: React.FC = () => {
                 <div className="text-info mb-2">
                   <i className="fas fa-check-circle fa-2x"></i>
                 </div>
-                <h4 className="mb-1">4</h4>
+                <h4 className="mb-1">{bookings.filter(b => b.status === 'completed').length}</h4>
                 <small className="text-muted">Completed</small>
               </div>
             </div>
@@ -147,7 +151,19 @@ const Bookings: React.FC = () => {
               </div>
 
               <div className="card-body">
-                {filteredBookings.length === 0 ? (
+                {loading ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-zambia-green" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="text-muted mt-3">Loading bookings...</p>
+                  </div>
+                ) : error ? (
+                  <div className="alert alert-danger text-center">
+                    <i className="fas fa-exclamation-circle me-2"></i>
+                    {error}
+                  </div>
+                ) : filteredBookings.length === 0 ? (
                   <div className="text-center py-5">
                     <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                     <h5 className="text-muted">No bookings found</h5>
@@ -155,9 +171,9 @@ const Bookings: React.FC = () => {
                   </div>
                 ) : (
                   <div className="row">
-                    {filteredBookings.map((booking) => (
+                    {filteredBookings.map((booking: any) => (
                       <motion.div
-                        key={booking.id}
+                        key={booking._id}
                         className="col-12 mb-3"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -170,34 +186,34 @@ const Bookings: React.FC = () => {
                                 <div className="booking-date">
                                   <div className="date-circle bg-zambia-green text-white rounded-circle d-inline-flex align-items-center justify-content-center" style={{width: '60px', height: '60px'}}>
                                     <div>
-                                      <div className="fw-bold fs-5">{new Date(booking.date).getDate()}</div>
-                                      <small>{new Date(booking.date).toLocaleDateString('en-US', {month: 'short'})}</small>
+                                      <div className="fw-bold fs-5">{new Date(booking.checkInDate || booking.createdAt).getDate()}</div>
+                                      <small>{new Date(booking.checkInDate || booking.createdAt).toLocaleDateString('en-US', {month: 'short'})}</small>
                                     </div>
                                   </div>
                                 </div>
                               </div>
 
                               <div className="col-md-6">
-                                <h6 className="card-title mb-2">{booking.property}</h6>
+                                <h6 className="card-title mb-2">{booking.property?.title || 'Property'}</h6>
                                 <div className="booking-details text-muted small">
                                   <div className="mb-1">
                                     <i className="fas fa-clock me-2"></i>
-                                    {booking.time} on {new Date(booking.date).toLocaleDateString()}
+                                    {new Date(booking.checkInDate || booking.createdAt).toLocaleDateString()}
                                   </div>
                                   <div className="mb-1">
                                     <i className="fas fa-user-tie me-2"></i>
-                                    Agent: {booking.agent}
+                                    Tenant: {booking.tenant?.firstName || 'N/A'}
                                   </div>
                                   <div>
-                                    <i className={`fas ${booking.type === 'viewing' ? 'fa-eye' : 'fa-handshake'} me-2`}></i>
-                                    {booking.type.charAt(0).toUpperCase() + booking.type.slice(1)}
+                                    <i className="fas fa-calendar me-2"></i>
+                                    Status: {booking.status || 'pending'}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="col-md-2 text-center mb-3 mb-md-0">
-                                <span className={getStatusBadge(booking.status)}>
-                                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                <span className={getStatusBadge(booking.status || 'pending')}>
+                                  {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
                                 </span>
                               </div>
 
@@ -209,7 +225,7 @@ const Bookings: React.FC = () => {
                                   <button className="btn btn-outline-zambia-green btn-sm">
                                     <i className="fas fa-edit"></i>
                                   </button>
-                                  {booking.status === 'pending' && (
+                                  {(booking.status === 'pending' || booking.status === 'confirmed') && (
                                     <button className="btn btn-outline-danger btn-sm">
                                       <i className="fas fa-times"></i>
                                     </button>
