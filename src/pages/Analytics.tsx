@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { analyticsService } from '../utils/api';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
@@ -6,56 +7,24 @@ const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30d');
 
   // Mock data - replace with API call
-  const revenueData = [
-    { month: 'Aug', revenue: 35000, bookings: 12 },
-    { month: 'Sep', revenue: 42000, bookings: 15 },
-    { month: 'Oct', revenue: 38000, bookings: 14 },
-    { month: 'Nov', revenue: 45000, bookings: 18 },
-    { month: 'Dec', revenue: 52000, bookings: 22 },
-    { month: 'Jan', revenue: 48000, bookings: 19 },
-  ];
+  const [revenueData, setRevenueData] = useState<any[]>([]);
 
-  const propertyTypeData = [
-    { name: 'Apartments', value: 45, color: '#007A33' },
-    { name: 'Houses', value: 30, color: '#009944' },
-    { name: 'Offices', value: 15, color: '#28a745' },
-    { name: 'Commercial', value: 10, color: '#20c997' },
-  ];
+  const [propertyTypeData, setPropertyTypeData] = useState<any[]>([]);
 
-  const townshipData = [
-    { township: 'Kabulonga', properties: 25, avgPrice: 18000 },
-    { township: 'Roma', properties: 20, avgPrice: 22000 },
-    { township: 'CBD', properties: 15, avgPrice: 25000 },
-    { township: 'Woodlands', properties: 12, avgPrice: 15000 },
-    { township: 'Kalundu', properties: 8, avgPrice: 12000 },
-  ];
+  const [townshipData, setTownshipData] = useState<any[]>([]);
 
-  const userGrowthData = [
-    { month: 'Aug', tenants: 45, owners: 12, agents: 8 },
-    { month: 'Sep', tenants: 52, owners: 15, agents: 10 },
-    { month: 'Oct', tenants: 61, owners: 18, agents: 12 },
-    { month: 'Nov', tenants: 73, owners: 22, agents: 15 },
-    { month: 'Dec', tenants: 89, owners: 28, agents: 18 },
-    { month: 'Jan', tenants: 105, owners: 32, agents: 21 },
-  ];
+  const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
 
-  const maintenanceData = [
-    { month: 'Aug', requests: 8, resolved: 7 },
-    { month: 'Sep', requests: 12, resolved: 10 },
-    { month: 'Oct', requests: 15, resolved: 13 },
-    { month: 'Nov', requests: 18, resolved: 16 },
-    { month: 'Dec', requests: 22, resolved: 19 },
-    { month: 'Jan', requests: 25, resolved: 22 },
-  ];
+  const [maintenanceData, setMaintenanceData] = useState<any[]>([]);
 
-  const keyMetrics = {
-    totalRevenue: 260000,
-    totalBookings: 100,
-    activeProperties: 80,
-    totalUsers: 156,
-    avgOccupancyRate: 85,
-    maintenanceResolutionTime: 3.2,
-  };
+  const [keyMetrics, setKeyMetrics] = useState<any>({
+    totalRevenue: 0,
+    totalBookings: 0,
+    activeProperties: 0,
+    totalUsers: 0,
+    avgOccupancyRate: 0,
+    maintenanceResolutionTime: 0,
+  });
 
   const formatCurrency = (value: number) => {
     return `ZK ${value.toLocaleString()}`;
@@ -64,6 +33,25 @@ const Analytics: React.FC = () => {
   const formatPercentage = (value: number) => {
     return `${value}%`;
   };
+
+  // Fetch analytics on mount
+  useEffect(() => {
+    const fetch = async () => {
+      try {
+        const res = await analyticsService.getOverview();
+        const data = res || {};
+        setKeyMetrics(data.keyMetrics || {});
+        setRevenueData(data.revenueData || []);
+        setPropertyTypeData((data.propertyTypeData || []).map((p: any) => ({ ...p, color: '#007A33' })));
+        setUserGrowthData(data.userGrowthData || []);
+        setMaintenanceData(data.maintenanceData || []);
+        setTownshipData(data.townshipData || []);
+      } catch (err) {
+        console.warn('Failed to load analytics:', err);
+      }
+    };
+    fetch();
+  }, []);
 
   return (
     <div className="analytics-page">
@@ -80,7 +68,7 @@ const Analytics: React.FC = () => {
               <div>
                 <h1 className="h2 mb-1">Analytics Dashboard</h1>
                 <p className="text-muted mb-0">
-                  Insights and performance metrics for ZAMSTATE platform.
+                  Last 30 days — Insights and performance metrics for ZAMSTATE platform.
                 </p>
               </div>
               <div className="d-flex gap-2">

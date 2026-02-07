@@ -32,9 +32,8 @@ const Dashboard: React.FC = () => {
 
         // Fetch unread messages count (if available)
         const messagesRes = await apiClient('/messages/conversations');
-        const unreadMessages = (messagesRes.conversations || []).filter(
-          (c: any) => c.unreadCount > 0
-        ).length;
+        const convs = Array.isArray(messagesRes) ? messagesRes : (messagesRes.conversations || messagesRes.data || []);
+        const unreadMessages = (convs || []).filter((c: any) => c.unreadCount > 0).length;
 
         // Set stats
         setStats({

@@ -12,6 +12,9 @@ import cloudinaryRoutes from './routes/cloudinaryRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { User } from './models/User.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -36,9 +39,20 @@ io.on('connection', (socket) => {
 
   // User joins a specific room (e.g., conversation room)
   socket.on('join-conversation', (conversationId: string, userId: string) => {
+    // track socket for the user and join both conversation and personal rooms
     connectedUsers.set(userId, socket.id);
     socket.join(`conversation-${conversationId}`);
+    socket.join(`user-${userId}`);
     socket.emit('connection-status', { status: 'connected' });
+
+    // mark user as online in DB and broadcast presence
+    try {
+      User.findByIdAndUpdate(userId, { online: true }, { new: true }).exec();
+      io.emit('user-online', { userId });
+    } catch (err) {
+      console.warn('Failed to mark user online:', err);
+    }
+
     console.log(`✅ User ${userId} joined conversation ${conversationId}`);
   });
 
@@ -80,13 +94,27 @@ io.on('connection', (socket) => {
   // Disconnect handler
   socket.on('disconnect', () => {
     // Remove user from connected users map
+    let disconnectedUserId: string | null = null;
     for (const [userId, socketId] of connectedUsers.entries()) {
       if (socketId === socket.id) {
+        disconnectedUserId = userId;
         connectedUsers.delete(userId);
         break;
       }
     }
-    console.log('🔴 User disconnected:', socket.id);
+
+    if (disconnectedUserId) {
+      const lastSeen = new Date();
+      try {
+        User.findByIdAndUpdate(disconnectedUserId, { online: false, lastSeen }, { new: true }).exec();
+        io.emit('user-offline', { userId: disconnectedUserId, lastSeen: lastSeen.toISOString() });
+      } catch (err) {
+        console.warn('Failed to mark user offline:', err);
+      }
+      console.log(`🔴 User disconnected: ${socket.id} (user ${disconnectedUserId})`);
+    } else {
+      console.log('🔴 Socket disconnected:', socket.id);
+    }
   });
 });
 
@@ -131,6 +159,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/maintenance-requests', maintenanceRoutes);
 app.use('/api/bookings', bookingRoutes);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/authStore';
-import apiClient from '../utils/api';
+import { messageService, userService } from '../utils/api';
+import { timeAgo } from '../utils/time';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +15,7 @@ const RealTimeMessages: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
+  const [presence, setPresence] = useState<Record<string, { online: boolean; lastSeen?: string }>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | undefined>(undefined);
 
@@ -37,6 +39,15 @@ const RealTimeMessages: React.FC = () => {
       if (user) {
         socket.current.emit('join-conversation', selectedConversation?._id, user.id);
       }
+    });
+
+    // Presence updates
+    socket.current.on('user-online', ({ userId }: any) => {
+      setPresence((p) => ({ ...p, [userId]: { ...(p[userId] || {}), online: true } }));
+    });
+
+    socket.current.on('user-offline', ({ userId, lastSeen }: any) => {
+      setPresence((p) => ({ ...p, [userId]: { ...(p[userId] || {}), online: false, lastSeen } }));
     });
 
     // Receive real-time messages
@@ -67,8 +78,10 @@ const RealTimeMessages: React.FC = () => {
     const fetchConversations = async () => {
       setLoading(true);
       try {
-        const response = await apiClient('/messages/conversations');
-        setConversations(response.conversations || response.data || []);
+        const response = await messageService.getConversations();
+        // server returns an array — handle both array and wrapped responses
+        const convs = Array.isArray(response) ? response : (response.conversations || response.data || []);
+        setConversations(convs as any[]);
       } catch (error) {
         console.warn('Failed to fetch conversations:', error);
         setConversations([]);
@@ -77,6 +90,22 @@ const RealTimeMessages: React.FC = () => {
       }
     };
     fetchConversations();
+
+    // Fetch initial presence for all users so UI can show online/offline immediately
+    const fetchPresence = async () => {
+      try {
+        const res = await userService.getPresence();
+        const users = res.users || res.data || (Array.isArray(res) ? res : []);
+        const mapping: Record<string, { online: boolean; lastSeen?: string }> = {};
+        (Array.isArray(users) ? users : []).forEach((u: any) => {
+          mapping[u._id] = { online: !!u.online, lastSeen: u.lastSeen };
+        });
+        setPresence(mapping);
+      } catch (err) {
+        console.warn('Failed to fetch presence:', err);
+      }
+    };
+    fetchPresence();
 
     return () => {
       if (socket.current) socket.current.disconnect();
@@ -94,8 +123,9 @@ const RealTimeMessages: React.FC = () => {
       // Fetch existing messages
       const fetchMessages = async () => {
         try {
-          const response = await apiClient(`/messages/conversation/${selectedConversation._id}`);
-          setMessages(response.messages || response.data || []);
+          const response = await messageService.getMessages(selectedConversation._id);
+          const msgs = Array.isArray(response) ? response : (response.messages || response.data || []);
+          setMessages(msgs as any[]);
         } catch (error) {
           console.warn('Failed to fetch messages:', error);
           setMessages([]);
@@ -119,20 +149,25 @@ const RealTimeMessages: React.FC = () => {
 
     setSendingMessage(true);
     try {
-      // Send via API first
-      const response = await apiClient('/messages', {
-        method: 'POST',
-        body: {
-          conversationId: selectedConversation._id,
-          content: newMessage,
-        },
-      });
+      // Determine recipient (other participant)
+      const other = selectedConversation.participants?.find((p: any) => p._id !== user?.id);
+      const payload: any = {
+        recipientId: other?._id,
+        propertyId: selectedConversation.property?._id,
+        content: newMessage,
+      };
+
+      // Send via API to persist
+      const response = await messageService.sendMessage(payload);
+
+      // response.data contains the saved message
+      const saved = response.data || response;
 
       // Emit via Socket.IO for real-time delivery
       socket.current.emit('send-message', {
         conversationId: selectedConversation._id,
         message: {
-          ...response.message,
+          ...saved,
           sender: user,
         },
       });
@@ -213,10 +248,22 @@ const RealTimeMessages: React.FC = () => {
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1">
                             <h6 className="mb-1">
-                              {conv.participants
-                                ?.filter((p: any) => p._id !== user?.id)
-                                .map((p: any) => p.firstName || p.name)
-                                .join(', ') || 'Unknown'}
+                              {(() => {
+                                const others = conv.participants?.filter((p: any) => p._id !== user?.id) || [];
+                                const name = others.map((p: any) => p.firstName || p.name).join(', ') || 'Unknown';
+                                const primary = others[0];
+                                const pr = primary ? presence[primary._id] : undefined;
+                                return (
+                                  <>
+                                    {name}
+                                    {pr && (
+                                              <span className={`ms-2 badge ${pr.online ? 'bg-success' : 'bg-secondary'}`}>
+                                                {pr.online ? 'Online' : timeAgo(pr.lastSeen)}
+                                              </span>
+                                            )}
+                                  </>
+                                );
+                              })()}
                             </h6>
                             <small className="text-truncate d-block">
                               {conv.lastMessage?.content || 'Start a conversation...'}
@@ -249,6 +296,18 @@ const RealTimeMessages: React.FC = () => {
                           .join(', ')}
                       </h5>
                       {userTyping && <small className="text-muted">typing...</small>}
+                      {!userTyping && (
+                        <small className="text-muted">
+                        {(() => {
+                            const other = selectedConversation.participants?.find((p: any) => p._id !== user?.id);
+                            if (!other) return '';
+                            const pr = presence[other._id];
+                            if (pr?.online) return 'Online';
+                            if (pr?.lastSeen) return `Last seen ${timeAgo(pr.lastSeen)}`;
+                            return '';
+                          })()}
+                        </small>
+                      )}
                     </div>
                   </div>
                 </div>

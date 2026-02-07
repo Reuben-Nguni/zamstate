@@ -96,6 +96,14 @@ export const messageService = {
     apiClient(`/messages/conversations/${conversationId}/messages`),
 };
 
+export const userService = {
+  getPresence: () => apiClient('/users/presence'),
+};
+
+export const analyticsService = {
+  getOverview: () => apiClient('/analytics/overview'),
+};
+
 export const propertyService = {
   getProperties: (filters?: any) =>
     apiClient('/properties', { params: filters }),

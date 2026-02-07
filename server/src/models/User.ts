@@ -39,6 +39,11 @@ const userSchema = new Schema(
     },
     bio: String,
     verified_at: Date,
+    online: {
+      type: Boolean,
+      default: false,
+    },
+    lastSeen: Date,
   },
   { timestamps: true }
 );
