@@ -13,16 +13,7 @@ export const createProperty = async (req: Request, res: Response) => {
     console.log('req.body keys:', Object.keys(req.body || {}));
 
     // Debug: log summary to console only (no persistent file writes)
-    try {
-      const summary: any = {
-        ts: new Date().toISOString(),
-        filesLength: Array.isArray((req as any).files) ? (req as any).files.length : 0,
-        bodyKeys: Object.keys(req.body || {}),
-      };
-      console.debug('[createProperty debug summary]', summary);
-    } catch (logErr) {
-      console.warn('Failed to generate debug summary', logErr);
-    }
+    // debug summary removed
 
     const { title, description, price, currency, type, location, features, status } = req.body;
 
@@ -77,11 +68,7 @@ export const createProperty = async (req: Request, res: Response) => {
     }
 
     // Console-only summary after processing
-    try {
-      console.debug('[createProperty] imagesSaved:', images.length);
-    } catch (logErr) {
-      console.warn('[createProperty] failed to write upload summary', logErr);
-    }
+    // image summary removed
 
     const property = new Property({
       title,
