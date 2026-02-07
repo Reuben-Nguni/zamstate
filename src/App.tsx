@@ -13,7 +13,10 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import Dashboard from './pages/Dashboard';
+import ResetPassword from './pages/auth/ResetPassword';
+import EmailVerified from './pages/EmailVerified';
 import Properties from './pages/Properties';
 import PropertyAdd from './pages/PropertyAdd';
 import PropertyDetail from './pages/PropertyDetail';
@@ -48,6 +51,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/register" element={<Register />} />
               <Route
                 path="/dashboard"
@@ -57,6 +61,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/email-verified" element={<EmailVerified />} />
 <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetail />} />
               <Route

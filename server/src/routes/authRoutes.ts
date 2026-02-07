@@ -1,6 +1,15 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, updateProfile } from '../controllers/authController.js';
+import {
+  register,
+  login,
+  getProfile,
+  updateProfile,
+  requestPasswordReset,
+  resetPassword,
+  verifyEmail,
+  resendVerification,
+} from '../controllers/authController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
@@ -21,5 +30,10 @@ router.post('/login', [body('email').isEmail(), body('password').notEmpty()], lo
 
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
+
+router.post('/request-password-reset', [body('email').isEmail()], requestPasswordReset);
+router.post('/reset-password', [body('token').notEmpty(), body('password').isLength({ min: 6 })], resetPassword);
+router.get('/verify-email', verifyEmail);
+router.post('/resend-verification', [body('email').isEmail()], resendVerification);
 
 export default router;

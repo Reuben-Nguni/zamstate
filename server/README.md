@@ -87,6 +87,10 @@ Server runs on `http://localhost:5000`
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/profile` - Get user profile (requires auth)
 - `PUT /api/auth/profile` - Update profile (requires auth)
+ - `POST /api/auth/request-password-reset` - Request password reset (body: `{ email }`)
+ - `POST /api/auth/reset-password` - Reset password (body: `{ token, password }`)
+ - `GET /api/auth/verify-email?token=...` - Verify user email via token (redirects to frontend)
+ - `POST /api/auth/resend-verification` - Resend verification email (body: `{ email }`)
 
 ### Properties
 - `GET /api/properties` - List all properties (with pagination & filters)
@@ -206,6 +210,27 @@ npm start
 - **Multer** - File uploads
 - **TypeScript** - Type safety
 - **Express-validator** - Input validation
+
+## Email / SMTP Setup
+
+This project uses Nodemailer with Brevo (Sendinblue) SMTP by default. Set the following environment variables in your `.env`:
+
+```env
+# Brevo SMTP
+BREVO_USER=your_brevo_smtp_username
+BREVO_PASS=your_brevo_smtp_password_or_api_key
+BREVO_FROM=verified-sender@example.com
+BREVO_HOST=smtp-relay.brevo.com
+BREVO_PORT=587
+
+# Frontend client URL (used for links in emails)
+CLIENT_URL=http://localhost:5173
+```
+
+Notes:
+- Use `BREVO_FROM` as a verified sender in your Brevo account.
+- Tokens: password reset tokens expire in 15 minutes; verification tokens expire in 24 hours.
+- For higher volume, upgrade your Brevo plan — the code works with SMTP credentials regardless of tier.
 
 ## License
 

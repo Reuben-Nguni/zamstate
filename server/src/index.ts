@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import 'express-async-errors';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import { connectDB } from './config/database.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
@@ -12,7 +14,81 @@ import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Socket.IO setup
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? true // Allow all in production
+      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+// Socket.IO connection handling
+const connectedUsers = new Map<string, string>(); // userId -> socketId
+
+io.on('connection', (socket) => {
+  console.log('🟢 New user connected:', socket.id);
+
+  // User joins a specific room (e.g., conversation room)
+  socket.on('join-conversation', (conversationId: string, userId: string) => {
+    connectedUsers.set(userId, socket.id);
+    socket.join(`conversation-${conversationId}`);
+    socket.emit('connection-status', { status: 'connected' });
+    console.log(`✅ User ${userId} joined conversation ${conversationId}`);
+  });
+
+  // Send message event
+  socket.on('send-message', (data: any) => {
+    const { conversationId, message } = data;
+    
+    // Emit to all users in the conversation room
+    io.to(`conversation-${conversationId}`).emit('receive-message', {
+      ...message,
+      timestamp: new Date().toISOString(),
+    });
+    
+    console.log(`📨 Message sent in conversation ${conversationId}`);
+  });
+
+  // Booking event
+  socket.on('new-booking', (bookingData: any) => {
+    // Notify property owner
+    const ownerId = bookingData.ownerId;
+    if (connectedUsers.has(ownerId)) {
+      io.to(`user-${ownerId}`).emit('booking-request', bookingData);
+      console.log(`🔔 Booking notification sent to owner ${ownerId}`);
+    }
+  });
+
+  // User typing indicator
+  socket.on('typing', (data: any) => {
+    const { conversationId, userId } = data;
+    socket.broadcast.to(`conversation-${conversationId}`).emit('user-typing', { userId });
+  });
+
+  // Stop typing indicator
+  socket.on('stop-typing', (data: any) => {
+    const { conversationId, userId } = data;
+    socket.broadcast.to(`conversation-${conversationId}`).emit('user-stop-typing', { userId });
+  });
+
+  // Disconnect handler
+  socket.on('disconnect', () => {
+    // Remove user from connected users map
+    for (const [userId, socketId] of connectedUsers.entries()) {
+      if (socketId === socket.id) {
+        connectedUsers.delete(userId);
+        break;
+      }
+    }
+    console.log('🔴 User disconnected:', socket.id);
+  });
+});
 
 // Middleware
 // Configure CORS to allow origins from env or fallbacks
@@ -67,8 +143,12 @@ app.get('/api/health', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+// Export io for use in other modules if needed
+export { io };
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`✨ WebSocket (Socket.IO) server listening for real-time connections`);
   console.log(`CORS configured. allowAll=${allowAll}. allowedOrigins=${allowAll ? 'ALL' : allowedOrigins.join(',')}`);
 });

@@ -79,6 +79,12 @@ export const authService = {
     apiClient('/auth/profile'),
   updateProfile: (data: any) =>
     apiClient('/auth/profile', { method: 'PUT', body: data }),
+  requestPasswordReset: (data: { email: string }) =>
+    apiClient('/auth/request-password-reset', { method: 'POST', body: data }),
+  resetPassword: (data: { token: string; password: string }) =>
+    apiClient('/auth/reset-password', { method: 'POST', body: data }),
+  resendVerification: (data: { email: string }) =>
+    apiClient('/auth/resend-verification', { method: 'POST', body: data }),
 };
 
 export const messageService = {
@@ -101,8 +107,12 @@ export const propertyService = {
       headers: {},
       body: formData,
     }),
-  updateProperty: (id: string, data: any) =>
-    apiClient(`/properties/${id}`, { method: 'PUT', body: data }),
+  updateProperty: (id: string, formData: FormData | any) =>
+    apiClient(`/properties/${id}`, { 
+      method: 'PUT', 
+      headers: formData instanceof FormData ? {} : {},
+      body: formData 
+    }),
   deleteProperty: (id: string) =>
     apiClient(`/properties/${id}`, { method: 'DELETE' }),
   getPropertyBookings: (id: string) =>

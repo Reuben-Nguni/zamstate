@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { propertyService, messageService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
+import BookingModal from '../components/BookingModal';
 
 interface PropertyImage {
   url: string;
@@ -14,16 +15,22 @@ interface PropertyImage {
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [messageContent, setMessageContent] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [editStatus, setEditStatus] = useState('');
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOwner = isAuthenticated && user && String(property?.owner?._id || property?.owner) === String(user.id);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -33,6 +40,7 @@ const PropertyDetail: React.FC = () => {
         setLoading(true);
         const data = await propertyService.getPropertyById(id);
         setProperty(data.data || data);
+        setEditStatus(data.data?.status || data.status || 'available');
       } catch (err: any) {
         setError(err.message || 'Error loading property');
         toast.error('Property not found');
@@ -57,7 +65,34 @@ const PropertyDetail: React.FC = () => {
     if (!isAuthenticated) {
       setShowLoginPrompt(true);
     } else {
-      toast.success('Booking feature coming soon!');
+      setShowBookingModal(true);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!id || !isOwner) return;
+    try {
+      setIsEditingStatus(true);
+      await propertyService.updateProperty(id, { status: editStatus });
+      setProperty({ ...property, status: editStatus });
+      toast.success('Property status updated');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update status');
+    } finally {
+      setIsEditingStatus(false);
+    }
+  };
+
+  const handleDeleteProperty = async () => {
+    if (!id || !isOwner || !window.confirm('Are you sure you want to delete this property?')) return;
+    try {
+      setDeleting(true);
+      await propertyService.deleteProperty(id);
+      toast.success('Property deleted');
+      navigate('/properties');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete property');
+      setDeleting(false);
     }
   };
 
@@ -114,12 +149,16 @@ const PropertyDetail: React.FC = () => {
     );
   }
 
-  const images = property.images && property.images.length > 0 
-    ? property.images.map((img: any) => ({
-        url: img.url || img,
-        caption: img.caption || ''
-      }))
+  const images = property.images && property.images.length > 0
+    ? property.images.map((img: any) => {
+        const url = img.url || img.secure_url || img.secureUrl || img.path || img.src || img;
+        return { url, caption: img.caption || '' };
+      })
     : [{ url: '/placeholder-image.jpg', caption: '' }];
+
+  const bedrooms = property.bedrooms || property.features?.bedrooms || property.features?.bedRooms;
+  const bathrooms = property.bathrooms || property.features?.bathrooms || property.features?.bathRooms;
+  const area = property.area || property.features?.area || property.features?.size;
 
   return (
     <div className="property-detail-page">
@@ -210,18 +249,47 @@ const PropertyDetail: React.FC = () => {
                 </p>
 
                 {/* Property Features */}
-                {property.features && property.features.length > 0 && (
+                {property.features && (
                   <div className="mt-4">
                     <h5 className="fw-bold mb-3">Features & Amenities</h5>
                     <div className="row g-3">
-                      {property.features.map((feature: string, index: number) => (
-                        <div key={index} className="col-md-6 col-lg-4">
-                          <div className="d-flex align-items-center">
-                            <i className="fas fa-check-circle text-success me-2"></i>
-                            <span>{feature}</span>
+                      {Array.isArray(property.features) ? (
+                        property.features.map((feature: string, index: number) => (
+                          <div key={index} className="col-md-6 col-lg-4">
+                            <div className="d-flex align-items-center">
+                              <i className="fas fa-check-circle text-success me-2"></i>
+                              <span>{feature}</span>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="row g-2">
+                          {property.features.bedrooms !== undefined && (
+                            <div className="col-6">
+                              <div className="d-flex align-items-center">
+                                <i className="fas fa-bed text-success me-2"></i>
+                                <span>{property.features.bedrooms} Beds</span>
+                              </div>
+                            </div>
+                          )}
+                          {property.features.bathrooms !== undefined && (
+                            <div className="col-6">
+                              <div className="d-flex align-items-center">
+                                <i className="fas fa-bath text-success me-2"></i>
+                                <span>{property.features.bathrooms} Baths</span>
+                              </div>
+                            </div>
+                          )}
+                          {property.features.area !== undefined && (
+                            <div className="col-6">
+                              <div className="d-flex align-items-center">
+                                <i className="fas fa-ruler-combined text-success me-2"></i>
+                                <span>{property.features.area} m²</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 )}
@@ -289,24 +357,24 @@ const PropertyDetail: React.FC = () => {
 
                   {/* Property Stats */}
                   <div className="row text-center mb-4">
-                    {property.bedrooms && (
+                    {bedrooms !== undefined && bedrooms !== null && (
                       <div className="col-4 border-end">
                         <i className="fas fa-bed fa-lg text-zambia-green mb-2"></i>
-                        <p className="mb-0 fw-semibold">{property.bedrooms}</p>
+                        <p className="mb-0 fw-semibold">{bedrooms}</p>
                         <small className="text-muted">Beds</small>
                       </div>
                     )}
-                    {property.bathrooms && (
+                    {bathrooms !== undefined && bathrooms !== null && (
                       <div className="col-4 border-end">
                         <i className="fas fa-bath fa-lg text-zambia-green mb-2"></i>
-                        <p className="mb-0 fw-semibold">{property.bathrooms}</p>
+                        <p className="mb-0 fw-semibold">{bathrooms}</p>
                         <small className="text-muted">Baths</small>
                       </div>
                     )}
-                    {property.area && (
+                    {area !== undefined && area !== null && (
                       <div className="col-4">
                         <i className="fas fa-ruler-combined fa-lg text-zambia-green mb-2"></i>
-                        <p className="mb-0 fw-semibold">{property.area}</p>
+                        <p className="mb-0 fw-semibold">{area}</p>
                         <small className="text-muted">m²</small>
                       </div>
                     )}
@@ -314,20 +382,42 @@ const PropertyDetail: React.FC = () => {
 
                   {/* Action Buttons */}
                   <div className="d-grid gap-2">
-                    <button 
-                      className="btn btn-zambia-green btn-lg"
-                      onClick={handleBookViewingClick}
-                    >
-                      <i className="fas fa-calendar-plus me-2"></i>
-                      Book a Viewing
-                    </button>
-                    <button 
-                      className="btn btn-outline-primary btn-lg"
-                      onClick={handleContactClick}
-                    >
-                      <i className="fas fa-envelope me-2"></i>
-                      Contact Owner
-                    </button>
+                    {isOwner ? (
+                      <>
+                        <button 
+                          className="btn btn-warning btn-lg"
+                          onClick={() => setIsEditingStatus(!isEditingStatus)}
+                        >
+                          <i className="fas fa-edit me-2"></i>
+                          {isEditingStatus ? 'Cancel' : 'Edit Status'}
+                        </button>
+                        <button 
+                          className="btn btn-danger btn-lg"
+                          onClick={handleDeleteProperty}
+                          disabled={deleting}
+                        >
+                          <i className="fas fa-trash me-2"></i>
+                          {deleting ? 'Deleting...' : 'Delete Property'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          className="btn btn-zambia-green btn-lg"
+                          onClick={handleBookViewingClick}
+                        >
+                          <i className="fas fa-calendar-plus me-2"></i>
+                          Book a Viewing
+                        </button>
+                        <button 
+                          className="btn btn-outline-primary btn-lg"
+                          onClick={handleContactClick}
+                        >
+                          <i className="fas fa-envelope me-2"></i>
+                          Contact Owner
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -353,7 +443,7 @@ const PropertyDetail: React.FC = () => {
                         </small>
                       </div>
                     </div>
-                    {isAuthenticated && (
+                    {isAuthenticated && !isOwner && (
                       <button 
                         className="btn btn-outline-primary w-100"
                         onClick={handleContactClick}
@@ -366,43 +456,71 @@ const PropertyDetail: React.FC = () => {
                 </div>
               )}
 
-              {/* Property Details */}
+              {/* Property Details / Edit Status */}
               <div className="card border-0 shadow-sm">
                 <div className="card-body p-4">
-                  <h5 className="fw-bold mb-3">
-                    <i className="fas fa-info-circle me-2"></i>
-                    Property Details
-                  </h5>
-                  <ul className="list-unstyled mb-0">
-                    <li className="d-flex justify-content-between py-2 border-bottom">
-                      <span className="text-muted">Property Type</span>
-                      <span className="fw-semibold text-capitalize">{property.type || 'N/A'}</span>
-                    </li>
-                    <li className="d-flex justify-content-between py-2 border-bottom">
-                      <span className="text-muted">Status</span>
-                      <span className={`badge ${property.status === 'available' ? 'bg-success' : 'bg-secondary'}`}>
-                        {property.status}
-                      </span>
-                    </li>
-                    {property.yearBuilt && (
-                      <li className="d-flex justify-content-between py-2 border-bottom">
-                        <span className="text-muted">Year Built</span>
-                        <span className="fw-semibold">{property.yearBuilt}</span>
-                      </li>
-                    )}
-                    {property.parking && (
-                      <li className="d-flex justify-content-between py-2 border-bottom">
-                        <span className="text-muted">Parking</span>
-                        <span className="fw-semibold">{property.parking} spaces</span>
-                      </li>
-                    )}
-                    <li className="d-flex justify-content-between py-2">
-                      <span className="text-muted">Listed</span>
-                      <span className="fw-semibold">
-                        {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </li>
-                  </ul>
+                  {isEditingStatus && isOwner ? (
+                    <>
+                      <h5 className="fw-bold mb-3">
+                        <i className="fas fa-edit me-2"></i>
+                        Edit Status
+                      </h5>
+                      <div className="mb-3">
+                        <label className="form-label">Property Status</label>
+                        <select className="form-select" value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                          <option value="available">Available</option>
+                          <option value="rented">Rented</option>
+                          <option value="sold">Sold</option>
+                          <option value="maintenance">Maintenance</option>
+                        </select>
+                      </div>
+                      <div className="d-grid gap-2">
+                        <button className="btn btn-success" onClick={handleUpdateStatus} disabled={isEditingStatus}>
+                          Save Changes
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => setIsEditingStatus(false)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h5 className="fw-bold mb-3">
+                        <i className="fas fa-info-circle me-2"></i>
+                        Property Details
+                      </h5>
+                      <ul className="list-unstyled mb-0">
+                        <li className="d-flex justify-content-between py-2 border-bottom">
+                          <span className="text-muted">Property Type</span>
+                          <span className="fw-semibold text-capitalize">{property.type || 'N/A'}</span>
+                        </li>
+                        <li className="d-flex justify-content-between py-2 border-bottom">
+                          <span className="text-muted">Status</span>
+                          <span className={`badge ${property.status === 'available' ? 'bg-success' : 'bg-secondary'}`}>
+                            {property.status}
+                          </span>
+                        </li>
+                        {property.yearBuilt && (
+                          <li className="d-flex justify-content-between py-2 border-bottom">
+                            <span className="text-muted">Year Built</span>
+                            <span className="fw-semibold">{property.yearBuilt}</span>
+                          </li>
+                        )}
+                        {property.parking && (
+                          <li className="d-flex justify-content-between py-2 border-bottom">
+                            <span className="text-muted">Parking</span>
+                            <span className="fw-semibold">{property.parking} spaces</span>
+                          </li>
+                        )}
+                        <li className="d-flex justify-content-between py-2">
+                          <span className="text-muted">Listed</span>
+                          <span className="fw-semibold">
+                            {property.createdAt ? new Date(property.createdAt).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </li>
+                      </ul>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -510,6 +628,21 @@ const PropertyDetail: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Booking Modal */}
+      <AnimatePresence>
+        {showBookingModal && property && (
+          <BookingModal 
+            propertyId={property._id}
+            propertyTitle={property.title}
+            onClose={() => setShowBookingModal(false)}
+            onSuccess={() => {
+              toast.success('Booking request created successfully!');
+              setShowBookingModal(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,33 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import apiClient from '../utils/api';
+import BookingModal from '../components/BookingModal';
 
 const Bookings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch bookings from the API
+      const response = await apiClient('/bookings');
+      const bookingsList = response.bookings || [];
+      setBookings(bookingsList);
+    } catch (err: any) {
+      console.warn('Failed to fetch bookings:', err.message);
+      setError(err.message || 'Failed to fetch bookings');
+      // Continue with empty state
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch bookings from the API
-        const response = await apiClient('/bookings');
-        const bookingsList = response.bookings || [];
-        setBookings(bookingsList);
-      } catch (err: any) {
-        console.warn('Failed to fetch bookings:', err.message);
-        setError(err.message || 'Failed to fetch bookings');
-        // Continue with empty state
-        setBookings([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBookings();
   }, []);
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) {
+      return;
+    }
+
+    try {
+      await apiClient(`/bookings/${bookingId}`, {
+        method: 'PUT',
+        body: { status: 'cancelled' },
+      });
+      toast.success('Booking cancelled');
+      fetchBookings();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel booking');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusClasses = {
@@ -48,8 +69,6 @@ const Bookings: React.FC = () => {
   return (
     <div className="bookings-page">
       <div className="container-fluid py-4">
-        {loading && <div>Loading bookings...</div>}
-        {error && <div className="text-danger">{error}</div>}
         {/* Header */}
         <div className="row mb-4">
           <div className="col-12">
@@ -58,7 +77,10 @@ const Bookings: React.FC = () => {
                 <h1 className="h3 mb-1">My Bookings</h1>
                 <p className="text-muted">Manage your property viewings and appointments</p>
               </div>
-              <button className="btn btn-zambia-green">
+              <button 
+                className="btn btn-zambia-green"
+                onClick={() => setShowBookingModal(true)}
+              >
                 <i className="fas fa-plus me-2"></i>
                 New Booking
               </button>
@@ -226,7 +248,10 @@ const Bookings: React.FC = () => {
                                     <i className="fas fa-edit"></i>
                                   </button>
                                   {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                                    <button className="btn btn-outline-danger btn-sm">
+                                    <button 
+                                      className="btn btn-outline-danger btn-sm"
+                                      onClick={() => handleCancelBooking(booking._id)}
+                                    >
                                       <i className="fas fa-times"></i>
                                     </button>
                                   )}
@@ -244,6 +269,19 @@ const Bookings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      <AnimatePresence>
+        {showBookingModal && (
+          <BookingModal 
+            onClose={() => {
+              setShowBookingModal(false);
+              // Refresh bookings after successful booking
+              fetchBookings();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
