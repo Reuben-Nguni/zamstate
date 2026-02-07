@@ -6,4 +6,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Cloudinary config loaded from environment; avoid logging secrets here
+
 export default cloudinary;

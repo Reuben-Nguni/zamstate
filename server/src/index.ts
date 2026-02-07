@@ -1,16 +1,15 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import 'express-async-errors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
+import cloudinaryRoutes from './routes/cloudinaryRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +43,7 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
+app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/maintenance-requests', maintenanceRoutes);
 app.use('/api/bookings', bookingRoutes);

@@ -3,43 +3,84 @@ import { Property } from '../models/Property.js';
 import { Booking } from '../models/Booking.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
+import path from 'path';
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
-    const { title, description, price, currency, type, location, features } = req.body;
+    // Debug logging to help diagnose missing files
+    console.log('==== createProperty request ====');
+    console.log('req.files:', Array.isArray((req as any).files) ? (req as any).files.length : typeof (req as any).files);
+    console.log('req.body keys:', Object.keys(req.body || {}));
 
-    let parsedLocation;
+    // Debug: log summary to console only (no persistent file writes)
     try {
-      parsedLocation = JSON.parse(location);
-    } catch {
-      parsedLocation = {};
+      const summary: any = {
+        ts: new Date().toISOString(),
+        filesLength: Array.isArray((req as any).files) ? (req as any).files.length : 0,
+        bodyKeys: Object.keys(req.body || {}),
+      };
+      console.debug('[createProperty debug summary]', summary);
+    } catch (logErr) {
+      console.warn('Failed to generate debug summary', logErr);
     }
 
-    const images = [];
+    const { title, description, price, currency, type, location, features, status } = req.body;
 
-    // Handle image uploads
-    if (req.files && Array.isArray(req.files)) {
-        console.log('Received files:', req.files.map((f: any) => f.path));
-      for (const file of req.files) {
+    // parse location and features if they're JSON strings
+    let parsedLocation: any = {};
+    if (location) {
+      try {
+        parsedLocation = typeof location === 'string' ? JSON.parse(location) : location;
+      } catch (e) {
+        parsedLocation = {};
+      }
+    }
+
+    let parsedFeatures: any = {};
+    if (features) {
+      try {
+        parsedFeatures = typeof features === 'string' ? JSON.parse(features) : features;
+      } catch (e) {
+        parsedFeatures = {};
+      }
+    }
+
+    const images: any[] = [];
+
+    // Multer will set req.files as an array when using upload.array('images')
+    const files: any[] = Array.isArray((req as any).files) ? (req as any).files : [];
+
+    if (files.length > 0) {
+      console.log('[createProperty] processing', files.length, 'file(s)');
+      for (const file of files) {
         try {
           const result = await cloudinary.uploader.upload(file.path, {
             folder: 'zamstate/properties',
             resource_type: 'auto',
           });
 
-          console.log('Cloudinary result:', result);
-          images.push({
-            url: result.secure_url,
-            publicId: result.public_id,
-          });
+          images.push({ url: result.secure_url, publicId: result.public_id });
+          console.log('[createProperty] uploaded', result.secure_url);
         } catch (uploadError: any) {
-          console.error('Cloudinary upload failed:', uploadError.message);
-          // Continue with other files or skip
+          console.error('[createProperty] cloudinary upload failed:', uploadError?.message || uploadError);
         }
 
-        // Clean up local file
-        fs.unlinkSync(file.path);
+        // remove temp file if exists
+        try {
+          if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        } catch (e) {
+          console.warn('[createProperty] failed to unlink temp file', e);
+        }
       }
+    } else {
+      console.log('[createProperty] no files found in req.files');
+    }
+
+    // Console-only summary after processing
+    try {
+      console.debug('[createProperty] imagesSaved:', images.length);
+    } catch (logErr) {
+      console.warn('[createProperty] failed to write upload summary', logErr);
     }
 
     const property = new Property({
@@ -48,8 +89,9 @@ export const createProperty = async (req: Request, res: Response) => {
       price,
       currency,
       type,
+      status: status || 'available',
       location: parsedLocation,
-      features,
+      features: parsedFeatures,
       images,
       owner: req.userId,
     });
@@ -57,11 +99,9 @@ export const createProperty = async (req: Request, res: Response) => {
     await property.save();
     await property.populate('owner');
 
-    res.status(201).json({
-      message: 'Property created successfully',
-      property,
-    });
+    res.status(201).json({ message: 'Property created successfully', property });
   } catch (error: any) {
+    console.error('[createProperty] error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -95,8 +135,11 @@ export const getProperties = async (req: Request, res: Response) => {
 
     const total = await Property.countDocuments(filter);
 
+    // Sanitize properties based on requester role
+    const sanitized = properties.map((p: any) => sanitizePropertyForRole(p, req));
+
     res.json({
-      data: properties,
+      data: sanitized,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -121,11 +164,40 @@ export const getPropertyById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    res.json(property);
+    const sanitized = sanitizePropertyForRole(property, req);
+    res.json(sanitized);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Helper to remove admin-only or sensitive fields based on requester role
+function sanitizePropertyForRole(property: any, req: Request) {
+  if (!property) return property;
+
+  const obj = property.toObject ? property.toObject() : property;
+
+  const requesterRole = req.user?.role || 'guest';
+  const requesterId = req.userId;
+
+  // If requester is admin or the owner or agent, return full object
+  if (requesterRole === 'admin' || String(obj.owner?._id) === String(requesterId) || String(obj.agent?._id) === String(requesterId)) {
+    return obj;
+  }
+
+  // For tenants and guests: remove sensitive owner contact details
+  if (obj.owner) {
+    delete obj.owner.email;
+    delete obj.owner.phone;
+    delete obj.owner.verified_at;
+    // keep name only
+  }
+
+  // Optionally hide internal fields
+  delete obj.__v;
+
+  return obj;
+}
 
 export const updateProperty = async (req: Request, res: Response) => {
   try {
