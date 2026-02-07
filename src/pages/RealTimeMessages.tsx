@@ -338,7 +338,7 @@ const RealTimeMessages: React.FC = () => {
                         <p>No messages yet. Start the conversation!</p>
                       </div>
                     ) : (
-                      {messages.map((msg: any, index: number) => {
+                      messages.map((msg: any, index: number) => {
                         const isOwn = msg.sender?._id === user?.id || msg.sender?.id === user?.id;
                         return (
                           <motion.div

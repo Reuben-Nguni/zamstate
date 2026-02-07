@@ -24,7 +24,7 @@ export async function resizeAndCropFile(file: File, size = 512): Promise<Blob> {
         resolve(blob);
       }, 'image/jpeg', 0.9);
     };
-    img.onerror = (e) => {
+    img.onerror = () => {
       URL.revokeObjectURL(url);
       reject(new Error('Failed to load image'));
     };
