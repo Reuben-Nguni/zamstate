@@ -51,8 +51,8 @@ function App() {
     const socketUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socket.on('connect', () => {
-      if (user?.id || user?._id) {
-        socket.emit('user-connected', { userId: user.id || user._id });
+      if (user?.id) {
+        socket.emit('user-connected', { userId: user.id });
       }
     });
 

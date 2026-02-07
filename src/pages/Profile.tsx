@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
-import { authService } from '../utils/api';
+import { authService, userService } from '../utils/api';
+import resizeAndCropFile, { blobToFile } from '../utils/image';
 import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
-  const { user, updateUser } = useAuthStore();
+  const { updateUser } = useAuthStore();
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', avatar: '' });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -58,8 +60,45 @@ const Profile: React.FC = () => {
               <input name="phone" className="form-control" value={form.phone} onChange={handleChange} />
             </div>
             <div className="col-md-6">
-              <label className="form-label">Avatar URL</label>
-              <input name="avatar" className="form-control" value={form.avatar} onChange={handleChange} />
+              <label className="form-label">Avatar</label>
+              <div className="d-flex gap-2 align-items-center">
+                <div style={{ width: 64, height: 64, borderRadius: 8, overflow: 'hidden', background: '#f3f3f3' }}>
+                  {form.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div className="d-flex align-items-center justify-content-center" style={{ width: '64px', height: '64px' }}>
+                      <i className="fas fa-user" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <input type="file" accept="image/*" onChange={async (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    setUploading(true);
+                    try {
+                      // crop and resize to 512x512 square before upload
+                      const blob = await resizeAndCropFile(file, 512);
+                      const f = blobToFile(blob, file.name || 'avatar.jpg');
+                      const fd = new FormData();
+                      fd.append('file', f);
+                      const res: any = await userService.uploadAvatar(fd);
+                      const url = res.url || res.data?.url || res.secure_url;
+                      if (url) setForm({ ...form, avatar: url });
+                      toast.success('Avatar uploaded');
+                    } catch (err: any) {
+                      console.error('Upload error', err);
+                      toast.error(err.message || 'Upload failed');
+                    } finally {
+                      setUploading(false);
+                    }
+                  }} />
+                  <div className="mt-1">
+                    <small className="text-muted">{uploading ? 'Uploading...' : 'Choose an image to upload'}</small>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -98,6 +98,7 @@ export const messageService = {
 
 export const userService = {
   getPresence: () => apiClient('/users/presence'),
+  uploadAvatar: (formData: FormData) => apiClient('/cloudinary/upload', { method: 'POST', headers: {}, body: formData }),
 };
 
 export const analyticsService = {

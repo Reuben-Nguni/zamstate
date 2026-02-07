@@ -246,6 +246,20 @@ const RealTimeMessages: React.FC = () => {
                         whileHover={{ backgroundColor: selectedConversation?._id === conv._id ? '' : '#f8f9fa' }}
                       >
                         <div className="d-flex justify-content-between align-items-start">
+                          <div className="me-2" style={{ width: 48, height: 48 }}>
+                            {(() => {
+                              const others = conv.participants?.filter((p: any) => p._id !== user?.id) || [];
+                              const primary = others[0];
+                              return primary?.avatar ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={primary.avatar} alt="avatar" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+                              ) : (
+                                <div className="bg-zambia-green rounded" style={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <i className="fas fa-user text-white" />
+                                </div>
+                              );
+                            })()}
+                          </div>
                           <div className="flex-grow-1">
                             <h6 className="mb-1">
                               {(() => {
@@ -324,7 +338,7 @@ const RealTimeMessages: React.FC = () => {
                         <p>No messages yet. Start the conversation!</p>
                       </div>
                     ) : (
-                      messages.map((msg: any, index: number) => {
+                      {messages.map((msg: any, index: number) => {
                         const isOwn = msg.sender?._id === user?.id || msg.sender?.id === user?.id;
                         return (
                           <motion.div
@@ -333,6 +347,18 @@ const RealTimeMessages: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className={`mb-3 d-flex ${isOwn ? 'justify-content-end' : 'justify-content-start'}`}
                           >
+                            {!isOwn && (
+                              <div className="me-2" style={{ width: 40, height: 40 }}>
+                                {msg.sender?.avatar ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={msg.sender.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                                ) : (
+                                  <div className="bg-zambia-green rounded" style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fas fa-user text-white" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
                             <div
                               className={`px-3 py-2 rounded-lg ${
                                 isOwn
@@ -347,6 +373,18 @@ const RealTimeMessages: React.FC = () => {
                                 {new Date(msg.createdAt).toLocaleTimeString()}
                               </small>
                             </div>
+                            {isOwn && (
+                              <div className="ms-2" style={{ width: 40, height: 40 }}>
+                                {user?.avatar ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={user.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                                ) : (
+                                  <div className="bg-zambia-green rounded" style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <i className="fas fa-user text-white" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </motion.div>
                         );
                       })
