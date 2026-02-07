@@ -24,10 +24,14 @@ import Bookings from './pages/Bookings';
 import RealTimeMessages from './pages/RealTimeMessages';
 import Maintenance from './pages/Maintenance';
 import Analytics from './pages/Analytics';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 // Stores
 import { useAuthStore } from './stores/authStore';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { io } from 'socket.io-client';
+import { useEffect } from 'react';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -39,7 +43,23 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { user } = useAuthStore();
   useAuthStore();
+
+  useEffect(() => {
+    // connect socket and announce presence for the logged-in user
+    const socketUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.on('connect', () => {
+      if (user?.id || user?._id) {
+        socket.emit('user-connected', { userId: user.id || user._id });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
 
   return (
     <ThemeProvider>
@@ -52,6 +72,22 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/register" element={<Register />} />
               <Route
                 path="/dashboard"

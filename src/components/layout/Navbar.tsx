@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import logo from '../../typescript.svg';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -132,9 +133,7 @@ const Navbar: React.FC = () => {
           to={isAuthenticated ? "/dashboard" : "/"}
           onClick={closeMenu}
         >
-          <div className="bg-zambia-green text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{ width: '40px', height: '40px', fontSize: '20px' }}>
-            <i className="fas fa-home"></i>
-          </div>
+          <img src={logo} alt="logo" style={{ width: '40px', height: '40px', marginRight: '10px' }} />
           ZAMSTATE
         </Link>
 
@@ -202,8 +201,14 @@ const Navbar: React.FC = () => {
                     border: 'none'
                   }}
                 >
-                  <div className="bg-zambia-green rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', minWidth: '36px' }}>
-                    <i className="fas fa-user text-white" style={{ fontSize: '14px' }}></i>
+                  <div style={{ width: '36px', height: '36px', minWidth: '36px' }}>
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt="avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div className="bg-zambia-green rounded-circle p-2 d-flex align-items-center justify-content-center">
+                        <i className="fas fa-user text-white" style={{ fontSize: '14px' }}></i>
+                      </div>
+                    )}
                   </div>
                   <span className="d-none d-lg-inline fw-semibold">{user.firstName}</span>
                   <i className="fas fa-chevron-down ms-2"></i>

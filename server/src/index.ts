@@ -91,6 +91,21 @@ io.on('connection', (socket) => {
     socket.broadcast.to(`conversation-${conversationId}`).emit('user-stop-typing', { userId });
   });
 
+  // Generic user connected presence (from client on app load)
+  socket.on('user-connected', async (data: any) => {
+    const { userId } = data || {};
+    if (!userId) return;
+    connectedUsers.set(userId, socket.id);
+    socket.join(`user-${userId}`);
+    try {
+      await User.findByIdAndUpdate(userId, { online: true }).exec();
+      io.emit('user-online', { userId });
+    } catch (err) {
+      console.warn('Failed to mark user online on user-connected:', err);
+    }
+    console.log(`🔵 user-connected event for user ${userId}`);
+  });
+
   // Disconnect handler
   socket.on('disconnect', () => {
     // Remove user from connected users map
