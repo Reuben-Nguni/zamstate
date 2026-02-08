@@ -69,6 +69,22 @@ const PropertyDetail: React.FC = () => {
     }
   };
 
+  const handleShareProperty = async (platform: string) => {
+    const url = window.location.href;
+    const text = `Check out this property: ${property.title} - ${property.location?.address || property.address || 'Property in Zambia'}`;
+    
+    const shareUrls: { [key: string]: string } = {
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      email: `mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(text)}`
+    };
+    
+    if (shareUrls[platform]) {
+      window.open(shareUrls[platform], '_blank');
+    }
+  };
+
   const handleUpdateStatus = async () => {
     if (!id || !isOwner) return;
     try {
@@ -348,6 +364,41 @@ const PropertyDetail: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Share Property */}
+                  <div className="mb-3 pb-3 border-bottom">
+                    <p className="small fw-semibold mb-2">Share this property:</p>
+                    <div className="d-flex gap-2">
+                      <button 
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => handleShareProperty('whatsapp')}
+                        title="Share on WhatsApp"
+                      >
+                        <i className="fab fa-whatsapp"></i>
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleShareProperty('facebook')}
+                        title="Share on Facebook"
+                      >
+                        <i className="fab fa-facebook-f"></i>
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-outline-info"
+                        onClick={() => handleShareProperty('twitter')}
+                        title="Share on Twitter"
+                      >
+                        <i className="fab fa-twitter"></i>
+                      </button>
+                      <button 
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => handleShareProperty('email')}
+                        title="Share via Email"
+                      >
+                        <i className="fas fa-envelope"></i>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="mb-4">
                     <h2 className="text-zambia-green fw-bold mb-0">
                       ZK {property.price?.toLocaleString() || '0'}
@@ -431,8 +482,15 @@ const PropertyDetail: React.FC = () => {
                       Property Owner
                     </h5>
                     <div className="d-flex align-items-center mb-3">
-                      <div className="bg-zambia-green rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                        <i className="fas fa-user text-white fa-2x"></i>
+                      <div 
+                        className="rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" 
+                        style={{ width: '70px', height: '70px', background: '#f3f3f3', overflow: 'hidden' }}
+                      >
+                        {property.owner.avatar ? (
+                          <img src={property.owner.avatar} alt={property.owner.firstName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <i className="fas fa-user text-muted fa-2x"></i>
+                        )}
                       </div>
                       <div>
                         <p className="fw-bold mb-0">
@@ -441,6 +499,19 @@ const PropertyDetail: React.FC = () => {
                         <small className="text-muted text-capitalize">
                           {property.owner.role || 'Owner'}
                         </small>
+                        {property.owner.whatsappNumber && (
+                          <div className="mt-1">
+                            <a 
+                              href={`https://wa.me/${property.owner.whatsappNumber.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-success text-decoration-none small"
+                            >
+                              <i className="fab fa-whatsapp me-1"></i>
+                              WhatsApp
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                     {isAuthenticated && !isOwner && (

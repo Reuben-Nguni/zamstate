@@ -223,11 +223,11 @@ export const getProfile = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {
-    const { firstName, lastName, phone, avatar } = req.body;
+    const { firstName, lastName, phone, avatar, whatsappNumber } = req.body;
 
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { firstName, lastName, phone, avatar },
+      { firstName, lastName, phone, avatar, whatsappNumber },
       { new: true, runValidators: true }
     );
 

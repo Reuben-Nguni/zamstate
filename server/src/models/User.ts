@@ -32,7 +32,21 @@ const userSchema = new Schema(
       enum: ['tenant', 'owner', 'agent', 'investor', 'admin'],
       default: 'tenant',
     },
-    avatar: String,
+    avatar: {
+      type: String,
+      default: null,
+    },
+    whatsappNumber: {
+      type: String,
+      default: null,
+      validate: {
+        validator: function(v: string) {
+          if (!v) return true; // Optional field
+          return /^[\d\s\-\+\(\)]{10,}$/.test(v.replace(/\s/g, ''));
+        },
+        message: 'Please provide a valid WhatsApp number',
+      },
+    },
     isVerified: {
       type: Boolean,
       default: false,

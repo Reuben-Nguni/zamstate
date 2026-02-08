@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
   const { updateUser } = useAuthStore();
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', avatar: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', whatsappNumber: '', avatar: '' });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -15,7 +15,13 @@ const Profile: React.FC = () => {
       try {
         const res = await authService.getProfile();
         const u = res.user || res.data || res;
-        setForm({ firstName: u.firstName || '', lastName: u.lastName || '', phone: u.phone || '', avatar: u.avatar || '' });
+        setForm({ 
+          firstName: u.firstName || '', 
+          lastName: u.lastName || '', 
+          phone: u.phone || '', 
+          whatsappNumber: u.whatsappNumber || '',
+          avatar: u.avatar || '' 
+        });
       } catch (err) {
         console.warn('Failed to load profile', err);
       }
@@ -58,6 +64,20 @@ const Profile: React.FC = () => {
             <div className="col-md-6">
               <label className="form-label">Phone</label>
               <input name="phone" className="form-control" value={form.phone} onChange={handleChange} />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">
+                <i className="fab fa-whatsapp me-2" style={{ color: '#25D366' }}></i>
+                WhatsApp Number (Optional)
+              </label>
+              <input 
+                name="whatsappNumber" 
+                className="form-control" 
+                placeholder="+1234567890"
+                value={form.whatsappNumber} 
+                onChange={handleChange} 
+              />
+              <small className="text-muted">Include country code (e.g., +260 for Zambia)</small>
             </div>
             <div className="col-md-6">
               <label className="form-label">Avatar</label>
