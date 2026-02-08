@@ -183,7 +183,7 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            {/* Demo Credentials */}
+            {/* Demo Credentials
             <div className="mt-4 p-3 bg-warning bg-opacity-10 border border-warning rounded">
               <h6 className="text-warning mb-2">
                 <i className="fas fa-info-circle me-1"></i>
@@ -193,7 +193,7 @@ const Login: React.FC = () => {
                 ----<br />
                 ----
               </small>
-            </div>
+            </div> */}
           </motion.div>
         </div>
       </div>

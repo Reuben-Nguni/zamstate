@@ -26,6 +26,9 @@ import Maintenance from './pages/Maintenance';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import InstallPrompt from './components/InstallPrompt';
 
 // Stores
 import { useAuthStore } from './stores/authStore';
@@ -101,6 +104,8 @@ function App() {
               <Route path="/email-verified" element={<EmailVerified />} />
 <Route path="/properties" element={<Properties />} />
               <Route path="/properties/:id" element={<PropertyDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
               <Route
                 path="/properties/add"
                 element={
@@ -145,6 +150,7 @@ function App() {
           </main>
           <Footer />
           <Toaster position="top-right" />
+          <InstallPrompt />
         </div>
       </Router>
       </QueryClientProvider>

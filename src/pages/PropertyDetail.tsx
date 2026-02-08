@@ -367,34 +367,45 @@ const PropertyDetail: React.FC = () => {
                   {/* Share Property */}
                   <div className="mb-3 pb-3 border-bottom">
                     <p className="small fw-semibold mb-2">Share this property:</p>
-                    <div className="d-flex gap-2">
-                      <button 
-                        className="btn btn-sm btn-outline-success"
+                    <div className="d-flex flex-wrap gap-2">
+                      <button
+                        className="btn btn-outline-success btn-md d-flex align-items-center"
                         onClick={() => handleShareProperty('whatsapp')}
                         title="Share on WhatsApp"
+                        style={{ padding: '0.4rem 0.8rem' }}
                       >
-                        <i className="fab fa-whatsapp"></i>
+                        <i className="fab fa-whatsapp me-2"></i>
+                        WhatsApp
                       </button>
-                      <button 
-                        className="btn btn-sm btn-outline-primary"
+
+                      <button
+                        className="btn btn-outline-primary btn-md d-flex align-items-center"
                         onClick={() => handleShareProperty('facebook')}
                         title="Share on Facebook"
+                        style={{ padding: '0.4rem 0.8rem' }}
                       >
-                        <i className="fab fa-facebook-f"></i>
+                        <i className="fab fa-facebook-f me-2"></i>
+                        Facebook
                       </button>
-                      <button 
-                        className="btn btn-sm btn-outline-info"
+
+                      <button
+                        className="btn btn-outline-info btn-md d-flex align-items-center"
                         onClick={() => handleShareProperty('twitter')}
                         title="Share on Twitter"
+                        style={{ padding: '0.4rem 0.8rem' }}
                       >
-                        <i className="fab fa-twitter"></i>
+                        <i className="fab fa-twitter me-2"></i>
+                        Twitter
                       </button>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary"
+
+                      <button
+                        className="btn btn-outline-secondary btn-md d-flex align-items-center"
                         onClick={() => handleShareProperty('email')}
                         title="Share via Email"
+                        style={{ padding: '0.4rem 0.8rem' }}
                       >
-                        <i className="fas fa-envelope"></i>
+                        <i className="fas fa-envelope me-2"></i>
+                        Email
                       </button>
                     </div>
                   </div>

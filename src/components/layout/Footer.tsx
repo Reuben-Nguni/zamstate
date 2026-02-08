@@ -80,16 +80,16 @@ const Footer: React.FC = () => {
               <i className="fas fa-map-marker-alt me-3 mt-1"></i>
               <div>
                 <p className="mb-0">Lusaka, Zambia</p>
-                <small className="text-muted">123 Real Estate Avenue</small>
+                <small className="text-muted">123 Blastone Park</small>
               </div>
             </div>
             <div className="d-flex align-items-center mb-2">
               <i className="fas fa-phone me-3"></i>
-              <a href="tel:+260211234567" className="text-light text-decoration-none">+260 211 234 567</a>
+              <a href="tel:+260970067982" className="text-light text-decoration-none">+260 9700 67982</a>
             </div>
             <div className="d-flex align-items-center mb-2">
               <i className="fas fa-envelope me-3"></i>
-              <a href="mailto:info@zamstate.com" className="text-light text-decoration-none">info@zamstate.com</a>
+              <a href="mailto:ngunireubenjr@gmail.com" className="text-light text-decoration-none">ngunireubenjr@gmail.com</a>
             </div>
             <div className="d-flex align-items-center">
               <i className="fas fa-clock me-3"></i>
@@ -102,7 +102,7 @@ const Footer: React.FC = () => {
         <hr className="my-4" />
         <div className="row align-items-center">
           <div className="col-md-6">
-            <p className="mb-0">&copy; 2024 ZAMSTATE. All rights reserved.</p>
+            <p className="mb-0">&copy; 2026 ZAMSTATE. All rights reserved.</p>
           </div>
           <div className="col-md-6 text-md-end">
             <Link to="/privacy" className="text-light text-decoration-none me-3">Privacy Policy</Link>

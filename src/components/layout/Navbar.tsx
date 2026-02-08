@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import logo from '../../../assets/logo.png';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,11 +9,13 @@ const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
     setIsMenuOpen(false);
+    setIsUserMenuOpen(false);
   };
 
   const closeMenu = () => {
@@ -79,6 +80,7 @@ const Navbar: React.FC = () => {
             Messages
           </Link>
         </li>
+        {/* About and Contact intentionally omitted from navbar */}
       </>
     );
 
@@ -139,7 +141,7 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Hamburger Menu Button */}
         <button
-          className={`navbar-toggler ${isDark ? 'border-white' : ''}`}
+          className={`navbar-toggler ms-auto ${isDark ? 'border-white' : ''}`}
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-controls="navbarNav"
@@ -161,99 +163,132 @@ const Navbar: React.FC = () => {
           <ul className={`navbar-nav ${isDark ? 'me-auto text-white' : 'me-auto'} align-items-lg-center`}>
             {getNavLinks()}
           </ul>
-          
-          {/* Right side - Theme Toggle and User Actions (inside collapsible on mobile) */}
-          <div className={`d-flex align-items-center gap-2 ${isDark ? 'text-white' : ''} mt-3 mt-lg-0`}>
-            {/* Theme Toggle Button with Sun/Moon Icons */}
-            <button
-              className={`btn d-flex align-items-center justify-content-center ${isDark ? 'text-warning' : 'text-primary'}`}
-              onClick={toggleTheme}
-              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-              style={{ 
-                width: '44px',
-                height: '44px',
-                borderRadius: '50%',
-                backgroundColor: isDark ? 'rgba(255, 215, 0, 0.15)' : 'rgba(31, 41, 55, 0.1)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontSize: '20px'
-              }}
-            >
-              {isDark ? (
-                <i className="fas fa-moon"></i>
-              ) : (
-                <i className="fas fa-sun"></i>
-              )}
-            </button>
 
-            {/* User dropdown - Only visible when authenticated */}
-            {isAuthenticated && user && (
-              <div className="dropdown" style={{ position: 'relative' }}>
+          {/* Small-screen controls inside the same collapse so hamburger stays right */} 
+          <div className="d-lg-none w-100 mt-2">
+            <div className="d-flex flex-column p-2 border-top">
+              <div className="d-flex align-items-center gap-2 mb-2">
                 <button
-                  className={`btn d-flex align-items-center gap-2 ${textClass}`}
-                  type="button"
-                  onClick={() => setIsMenuOpen(prev => !prev)}
-                  style={{ 
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    border: 'none'
-                  }}
+                  className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+                  onClick={toggleTheme}
                 >
-                  <div style={{ width: '36px', height: '36px', minWidth: '36px' }}>
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt="avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                  {isDark ? <i className="fas fa-moon me-2"></i> : <i className="fas fa-sun me-2"></i>}
+                  Theme
+                </button>
+              </div>
+
+              {isAuthenticated && user && (
+                <div className="d-flex align-items-center gap-2">
+                  <div style={{ width: '40px', height: '40px', overflow: 'hidden', borderRadius: '50%' }}>
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <div className="bg-zambia-green rounded-circle p-2 d-flex align-items-center justify-content-center">
-                        <i className="fas fa-user text-white" style={{ fontSize: '14px' }}></i>
+                      <div className="bg-zambia-green d-flex align-items-center justify-content-center" style={{ width: '100%', height: '100%' }}>
+                        <i className="fas fa-user text-white"></i>
                       </div>
                     )}
                   </div>
-                  <span className="d-none d-lg-inline fw-semibold">{user.firstName}</span>
-                  <i className="fas fa-chevron-down ms-2"></i>
-                </button>
-                {isMenuOpen && (
-                  <ul 
-                    className={`dropdown-menu dropdown-menu-end show ${isDark ? 'bg-dark' : 'bg-light'}`}
-                    style={{ minWidth: '200px', position: 'absolute', top: '100%', right: 0, zIndex: 2000 }}
-                  >
-                    <li>
-                      <Link 
-                        className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
-                        to="/profile"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <i className="fas fa-user-circle me-2"></i>
-                        Profile
-                      </Link>
-                    </li>
-                    <li>
-                      <Link 
-                        className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
-                        to="/settings"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <i className="fas fa-cog me-2"></i>
-                        Settings
-                      </Link>
-                    </li>
-                    <li><hr className={`dropdown-divider ${isDark ? 'border-secondary' : 'border-light'}`} /></li>
-                    <li>
-                      <button 
-                        className={`dropdown-item text-danger w-100 text-start`}
-                        onClick={handleLogout}
-                        style={{ padding: '10px 16px', border: 'none', background: 'none' }}
-                      >
-                        <i className="fas fa-sign-out-alt me-2"></i>
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                )}
-              </div>
-            )}
+                  <div className="flex-grow-1">
+                    <Link to="/profile" className="d-block" onClick={closeMenu}>Profile</Link>
+                    <Link to="/settings" className="d-block" onClick={closeMenu}>Settings</Link>
+                    <button className="btn btn-link text-danger p-0 mt-1" onClick={() => { handleLogout(); closeMenu(); }}>Logout</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Right side - Theme Toggle and User Actions (large screens) */}
+        <div className={`d-none d-lg-flex align-items-center gap-2 ${isDark ? 'text-white' : ''} mt-3 mt-lg-0`}> 
+          <button
+            className={`btn d-inline-flex align-items-center justify-content-center ${isDark ? 'text-warning' : 'text-primary'}`}
+            onClick={toggleTheme}
+            title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+            style={{ 
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: isDark ? 'rgba(255, 215, 0, 0.15)' : 'rgba(31, 41, 55, 0.1)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              fontSize: '20px'
+            }}
+          >
+            {isDark ? (
+              <i className="fas fa-moon"></i>
+            ) : (
+              <i className="fas fa-sun"></i>
+            )}
+          </button>
+
+          {/* User dropdown - Only visible when authenticated */}
+          {isAuthenticated && user && (
+            <div className="dropdown" style={{ position: 'relative' }}>
+              <button
+                className={`btn d-flex align-items-center gap-2 ${textClass}`}
+                type="button"
+                onClick={() => setIsUserMenuOpen(prev => !prev)}
+                style={{ 
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: 'none'
+                }}
+              >
+                <div style={{ width: '36px', height: '36px', minWidth: '36px' }}>
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="avatar" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div className="bg-zambia-green rounded-circle p-2 d-flex align-items-center justify-content-center">
+                      <i className="fas fa-user text-white" style={{ fontSize: '14px' }}></i>
+                    </div>
+                  )}
+                </div>
+                <span className="d-none d-lg-inline fw-semibold">{user.firstName}</span>
+                <i className="fas fa-chevron-down ms-2"></i>
+              </button>
+              {isUserMenuOpen && (
+                <ul 
+                  className={`dropdown-menu dropdown-menu-end show ${isDark ? 'bg-dark' : 'bg-light'}`}
+                  style={{ minWidth: '200px', position: 'absolute', top: '100%', right: 0, zIndex: 2000 }}
+                >
+                  <li>
+                    <Link 
+                      className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
+                      to="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <i className="fas fa-user-circle me-2"></i>
+                      Profile
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      className={`dropdown-item ${isDark ? 'text-white' : 'text-dark'}`}
+                      to="/settings"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <i className="fas fa-cog me-2"></i>
+                      Settings
+                    </Link>
+                  </li>
+                  <li><hr className={`dropdown-divider ${isDark ? 'border-secondary' : 'border-light'}`} /></li>
+                  <li>
+                    <button 
+                      className={`dropdown-item text-danger w-100 text-start`}
+                      onClick={() => { handleLogout(); setIsUserMenuOpen(false); }}
+                      style={{ padding: '10px 16px', border: 'none', background: 'none' }}
+                    >
+                      <i className="fas fa-sign-out-alt me-2"></i>
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </nav>
