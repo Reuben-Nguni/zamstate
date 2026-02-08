@@ -254,15 +254,14 @@ const PropertyAdd: React.FC = () => {
 
                     <div className="mb-3">
                       <label className="form-label fw-semibold">Township/Area</label>
-                      <select className="form-select form-select-lg" value={township} onChange={(e) => setTownship(e.target.value)}>
-                        <option value="Kabulonga">Kabulonga</option>
-                        <option value="Northmead">Northmead</option>
-                        <option value="Chilenje">Chilenje</option>
-                        <option value="Lusaka South">Lusaka South</option>
-                        <option value="East Park">East Park</option>
-                        <option value="Lilayi">Lilayi</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <input 
+                        type="text"
+                        className="form-control form-control-lg" 
+                        placeholder="e.g., Kabulonga, Northmead, Chilenje..."
+                        value={township} 
+                        onChange={(e) => setTownship(e.target.value)}
+                        required 
+                      />
                     </div>
                   </div>
 
