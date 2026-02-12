@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { propertyService } from '../utils/api';
+import { propertyService, adminService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 
 const PropertyAdd: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const [isApproved, setIsApproved] = useState(false);
+  const [checkingApproval, setCheckingApproval] = useState(true);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<number | ''>('');
@@ -21,6 +23,31 @@ const PropertyAdd: React.FC = () => {
   const [files, setFiles] = useState<FileList | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Check approval status
+  useEffect(() => {
+    const checkApproval = async () => {
+      if (user?.role === 'admin') {
+        setIsApproved(true);
+        setCheckingApproval(false);
+        return;
+      }
+
+      try {
+        const response = await adminService.getUserApprovalStatus();
+        setIsApproved(response.canPostProperties || false);
+      } catch (error) {
+        console.error('Failed to check approval status:', error);
+        setIsApproved(false);
+      } finally {
+        setCheckingApproval(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      checkApproval();
+    }
+  }, [isAuthenticated, user?.role]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -105,7 +132,25 @@ const PropertyAdd: React.FC = () => {
                 </h2>
                 <p className="text-muted mb-4">Fill in the details below to list your estate</p>
 
-                <form onSubmit={onSubmit}>
+                {checkingApproval ? (
+                  <div className="alert alert-info mb-4">
+                    <i className="fas fa-spinner fa-spin me-2"></i>
+                    Checking approval status...
+                  </div>
+                ) : !isApproved ? (
+                  <div className="alert alert-warning mb-4" role="alert">
+                    <h5 className="alert-heading">
+                      <i className="fas fa-clock me-2"></i>
+                      Approval Pending
+                    </h5>
+                    <p className="mb-0">
+                      Your account is pending admin approval. Once approved, you'll be able to post properties. 
+                      Please check back soon or contact support for more information.
+                    </p>
+                  </div>
+                ) : null}
+
+                <form onSubmit={onSubmit} style={{ opacity: checkingApproval || !isApproved ? 0.5 : 1, pointerEvents: checkingApproval || !isApproved ? 'none' : 'auto' }}>
                   {/* Basic Info */}
                   <div className="mb-4">
                     <h5 className="fw-bold mb-3">

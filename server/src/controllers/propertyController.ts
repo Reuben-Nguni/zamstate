@@ -1,12 +1,26 @@
 import { Request, Response } from 'express';
 import { Property } from '../models/Property.js';
 import { Booking } from '../models/Booking.js';
+import { User } from '../models/User.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
 import path from 'path';
 
 export const createProperty = async (req: Request, res: Response) => {
   try {
+    // Check if user is approved to post properties
+    const user = await User.findById((req as any).user?.id);
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    
+    // Only admins and approved users can post properties
+    if (user.role !== 'admin' && !user.isApproved) {
+      return res.status(403).json({ 
+        message: 'You are not approved to post properties. Please wait for admin approval.' 
+      });
+    }
+
     // Debug logging to help diagnose missing files
     console.log('==== createProperty request ====');
     console.log('req.files:', Array.isArray((req as any).files) ? (req as any).files.length : typeof (req as any).files);

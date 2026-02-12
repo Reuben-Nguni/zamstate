@@ -14,6 +14,7 @@ import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { User } from './models/User.js';
 
 const app = express();
@@ -175,6 +176,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/maintenance-requests', maintenanceRoutes);
 app.use('/api/bookings', bookingRoutes);

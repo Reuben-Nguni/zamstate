@@ -108,6 +108,17 @@ const Navbar: React.FC = () => {
       );
     }
 
+    if (user?.role === 'admin') {
+      roleLinks.push(
+        <li className="nav-item" key="user-management">
+          <Link className="nav-link" to="/admin/users" onClick={closeMenu}>
+            <i className="fas fa-users-cog me-1"></i>
+            User Management
+          </Link>
+        </li>
+      );
+    }
+
     return (
       <>
         {baseLinks}

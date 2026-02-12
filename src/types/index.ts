@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   isVerified: boolean;
+  isApproved?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -128,4 +128,17 @@ export const propertyService = {
     apiClient(`/properties/${id}/bookings`),
 };
 
+export const adminService = {
+  getAllUsers: () =>
+    apiClient('/admin/users'),
+  getPendingUsers: () =>
+    apiClient('/admin/users/pending'),
+  approveUser: (userId: string) =>
+    apiClient(`/admin/users/${userId}/approve`, { method: 'PUT' }),
+  rejectUser: (userId: string) =>
+    apiClient(`/admin/users/${userId}/reject`, { method: 'PUT' }),
+  getUserApprovalStatus: () =>
+    apiClient('/admin/approval-status'),
+};
+
 export default apiClient;

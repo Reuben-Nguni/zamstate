@@ -51,6 +51,11 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isApproved: {
+      type: Boolean,
+      default: false,
+      description: 'Admin approval for posting properties',
+    },
     bio: String,
     verified_at: Date,
     online: {

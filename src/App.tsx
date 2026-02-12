@@ -28,6 +28,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import UserManagement from './pages/UserManagement';
 import InstallPrompt from './components/InstallPrompt';
 
 // Stores
@@ -143,6 +144,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRoles={['admin', 'owner', 'agent']}>
                     <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requiredRoles={['admin']}>
+                    <UserManagement />
                   </ProtectedRoute>
                 }
               />
