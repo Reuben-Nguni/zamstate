@@ -92,19 +92,20 @@ const Home: React.FC = () => {
 
       {/* Hero Image & Tagline Section */}
       <section className="hero-image-section py-5 bg-gradient-section w-100">
-        <div className="w-100">
+        <div className="w-100 position-relative">
           <div className="row align-items-center justify-content-center h-100 mx-0">
-            <div className="col-12 col-md-8 col-lg-6 text-center px-3 px-md-4">
+            <div className="col-12 text-center px-0 position-relative hero-image-container">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8 }}
                 viewport={{ once: true }}
+                className="hero-image-wrapper"
               >
                 <img
-                  src="/house-key.png"
+                  src="/house-key.jpg"
                   alt="House and Key"
-                  className="img-fluid hero-key-image mb-4"
+                  className="img-fluid hero-key-image"
                   style={{
                     maxWidth: '100%',
                     height: 'auto',
@@ -112,19 +113,6 @@ const Home: React.FC = () => {
                   }}
                 />
               </motion.div>
-            </div>
-          </div>
-          <div className="row mx-0">
-            <div className="col-12 text-center px-3">
-              <motion.h3
-                className="fw-bold text-zambia-green hero-tagline"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                Leading Real Estate
-              </motion.h3>
             </div>
           </div>
         </div>
