@@ -16,6 +16,8 @@ const RealTimeMessages: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [userTyping, setUserTyping] = useState(false);
   const [presence, setPresence] = useState<Record<string, { online: boolean; lastSeen?: string }>>({});
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number | undefined>(undefined);
 
@@ -348,7 +350,14 @@ const RealTimeMessages: React.FC = () => {
                             className={`mb-3 d-flex ${isOwn ? 'justify-content-end' : 'justify-content-start'}`}
                           >
                             {!isOwn && (
-                              <div className="me-2" style={{ width: 40, height: 40 }}>
+                              <div
+                                className="me-2"
+                                style={{ width: 40, height: 40, cursor: 'pointer' }}
+                                onClick={() => {
+                                  setSelectedUserProfile(msg.sender);
+                                  setShowProfileModal(true);
+                                }}
+                              >
                                 {msg.sender?.avatar ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img src={msg.sender.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
@@ -359,20 +368,27 @@ const RealTimeMessages: React.FC = () => {
                                 )}
                               </div>
                             )}
-                            <div
-                              className={`px-3 py-2 rounded-lg ${
+                            <motion.div
+                              className={`px-3 py-2 rounded-lg cursor-pointer transition ${
                                 isOwn
                                   ? 'bg-zambia-green text-white'
                                   : 'bg-light text-dark'
                               }`}
                               style={{ maxWidth: '70%' }}
+                              whileHover={{ scale: 1.02 }}
+                              onClick={() => {
+                                if (!isOwn) {
+                                  setSelectedUserProfile(msg.sender);
+                                  setShowProfileModal(true);
+                                }
+                              }}
                             >
                               <p className="mb-1">{msg.content}</p>
                               <small className={isOwn ? 'text-white-50' : 'text-muted'}>
                                 {msg.sender?.firstName && !isOwn && `${msg.sender.firstName} • `}
                                 {new Date(msg.createdAt).toLocaleTimeString()}
                               </small>
-                            </div>
+                            </motion.div>
                             {isOwn && (
                               <div className="ms-2" style={{ width: 40, height: 40 }}>
                                 {user?.avatar ? (
@@ -429,6 +445,166 @@ const RealTimeMessages: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* User Profile Modal */}
+      <AnimatePresence>
+        {showProfileModal && selectedUserProfile && (
+          <motion.div
+            className="position-fixed top-0 start-0 w-100 h-100"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 1050,
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowProfileModal(false)}
+          >
+            <motion.div
+              className="position-absolute top-50 start-50 translate-middle bg-white rounded-lg shadow-lg p-4"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+              }}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                className="btn btn-close position-absolute top-3 end-3"
+                onClick={() => setShowProfileModal(false)}
+              />
+
+              {/* Profile Header */}
+              <div className="text-center mb-4">
+                <div className="mb-3">
+                  {selectedUserProfile?.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedUserProfile.avatar}
+                      alt="avatar"
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '3px solid var(--zambia-green)',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className="bg-zambia-green rounded-circle mx-auto d-flex align-items-center justify-content-center"
+                      style={{ width: 100, height: 100 }}
+                    >
+                      <i className="fas fa-user text-white" style={{ fontSize: '40px' }} />
+                    </div>
+                  )}
+                </div>
+
+                <h4 className="fw-bold text-zambia-green mb-2">
+                  {selectedUserProfile?.firstName} {selectedUserProfile?.lastName}
+                </h4>
+
+                {/* Online Status */}
+                <div className="mb-3">
+                  {presence[selectedUserProfile?._id]?.online ? (
+                    <span className="badge bg-success">
+                      <i className="fas fa-circle me-1"></i>Online
+                    </span>
+                  ) : (
+                    <span className="badge bg-secondary">
+                      <i className="fas fa-circle-xmark me-1"></i>
+                      {presence[selectedUserProfile?._id]?.lastSeen
+                        ? `Last seen ${timeAgo(presence[selectedUserProfile._id].lastSeen)}`
+                        : 'Offline'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Details */}
+              <div className="mb-4">
+                <div className="row g-3">
+                  <div className="col-12">
+                    <label className="form-label fw-semibold text-muted">Email</label>
+                    <p className="mb-0">
+                      <i className="fas fa-envelope me-2 text-zambia-green"></i>
+                      {selectedUserProfile?.email}
+                    </p>
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label fw-semibold text-muted">Phone</label>
+                    <p className="mb-0">
+                      <i className="fas fa-phone me-2 text-zambia-green"></i>
+                      {selectedUserProfile?.phone || 'Not provided'}
+                    </p>
+                  </div>
+
+                  {selectedUserProfile?.whatsappNumber && (
+                    <div className="col-12">
+                      <label className="form-label fw-semibold text-muted">WhatsApp</label>
+                      <p className="mb-0">
+                        <i className="fab fa-whatsapp me-2 text-zambia-green"></i>
+                        {selectedUserProfile.whatsappNumber}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="col-12">
+                    <label className="form-label fw-semibold text-muted">Role</label>
+                    <p className="mb-0">
+                      <span className="badge bg-info">
+                        {selectedUserProfile?.role || 'User'}
+                      </span>
+                    </p>
+                  </div>
+
+                  {selectedUserProfile?.bio && (
+                    <div className="col-12">
+                      <label className="form-label fw-semibold text-muted">Bio</label>
+                      <p className="mb-0">{selectedUserProfile.bio}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="d-flex gap-2">
+                <a
+                  href={`mailto:${selectedUserProfile?.email}`}
+                  className="btn btn-outline-zambia-green flex-grow-1"
+                >
+                  <i className="fas fa-envelope me-2"></i>
+                  Email
+                </a>
+                {selectedUserProfile?.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${selectedUserProfile.whatsappNumber.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-zambia-green flex-grow-1"
+                  >
+                    <i className="fab fa-whatsapp me-2"></i>
+                    WhatsApp
+                  </a>
+                )}
+                {selectedUserProfile?.phone && (
+                  <a
+                    href={`tel:${selectedUserProfile.phone}`}
+                    className="btn btn-outline-zambia-green flex-grow-1"
+                  >
+                    <i className="fas fa-phone me-2"></i>
+                    Call
+                  </a>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
