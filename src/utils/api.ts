@@ -141,4 +141,38 @@ export const adminService = {
     apiClient('/admin/approval-status'),
 };
 
+export const expenseService = {
+  createExpense: (data: any) =>
+    apiClient('/expenses', { method: 'POST', body: data }),
+  getOwnerExpenses: (filters?: any) =>
+    apiClient('/expenses', { params: filters }),
+  getPropertyExpenses: (propertyId: string, filters?: any) =>
+    apiClient(`/expenses/property/${propertyId}`, { params: filters }),
+  updateExpense: (expenseId: string, data: any) =>
+    apiClient(`/expenses/${expenseId}`, { method: 'PUT', body: data }),
+  markExpenseAsPaid: (expenseId: string, data?: any) =>
+    apiClient(`/expenses/${expenseId}/pay`, { method: 'PUT', body: data }),
+  deleteExpense: (expenseId: string) =>
+    apiClient(`/expenses/${expenseId}`, { method: 'DELETE' }),
+  getExpenseSummary: () =>
+    apiClient('/expenses/summary'),
+};
+
+export const rentalService = {
+  createRental: (data: any) =>
+    apiClient('/rentals', { method: 'POST', body: data }),
+  getOwnerRentals: (filters?: any) =>
+    apiClient('/rentals', { params: filters }),
+  getPropertyRentals: (propertyId: string, filters?: any) =>
+    apiClient(`/rentals/property/${propertyId}`, { params: filters }),
+  updateRental: (rentalId: string, data: any) =>
+    apiClient(`/rentals/${rentalId}`, { method: 'PUT', body: data }),
+  endRental: (rentalId: string, data?: any) =>
+    apiClient(`/rentals/${rentalId}/end`, { method: 'PUT', body: data }),
+  deleteRental: (rentalId: string) =>
+    apiClient(`/rentals/${rentalId}`, { method: 'DELETE' }),
+  getRentalSummary: () =>
+    apiClient('/rentals/summary'),
+};
+
 export default apiClient;

@@ -76,7 +76,7 @@ const Maintenance: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Calculated from real data */}
         <div className="row mb-4">
           <div className="col-md-3 mb-3">
             <div className="card border-0 shadow-sm">
@@ -84,7 +84,7 @@ const Maintenance: React.FC = () => {
                 <div className="text-danger mb-2">
                   <i className="fas fa-exclamation-triangle fa-2x"></i>
                 </div>
-                <h4 className="mb-1">3</h4>
+                <h4 className="mb-1">{requests.filter(r => r.status === 'pending' || r.status === 'in_progress').length}</h4>
                 <small className="text-muted">Active Requests</small>
               </div>
             </div>
@@ -95,7 +95,7 @@ const Maintenance: React.FC = () => {
                 <div className="text-info mb-2">
                   <i className="fas fa-tools fa-2x"></i>
                 </div>
-                <h4 className="mb-1">1</h4>
+                <h4 className="mb-1">{requests.filter(r => r.status === 'in_progress').length}</h4>
                 <small className="text-muted">In Progress</small>
               </div>
             </div>
@@ -106,7 +106,7 @@ const Maintenance: React.FC = () => {
                 <div className="text-warning mb-2">
                   <i className="fas fa-clock fa-2x"></i>
                 </div>
-                <h4 className="mb-1">2</h4>
+                <h4 className="mb-1">{requests.filter(r => r.status === 'pending').length}</h4>
                 <small className="text-muted">Pending</small>
               </div>
             </div>
@@ -117,7 +117,7 @@ const Maintenance: React.FC = () => {
                 <div className="text-success mb-2">
                   <i className="fas fa-check-circle fa-2x"></i>
                 </div>
-                <h4 className="mb-1">8</h4>
+                <h4 className="mb-1">{requests.filter(r => r.status === 'completed').length}</h4>
                 <small className="text-muted">Completed</small>
               </div>
             </div>

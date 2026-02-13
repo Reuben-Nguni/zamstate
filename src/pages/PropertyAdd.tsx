@@ -81,6 +81,21 @@ const PropertyAdd: React.FC = () => {
       return;
     }
 
+    // Recheck approval status before submission in case it was updated
+    if (user?.role !== 'admin') {
+      try {
+        const response = await adminService.getUserApprovalStatus();
+        if (!response.canPostProperties) {
+          toast.error('Your account is pending admin approval. You cannot post properties at this time.');
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to verify approval status:', error);
+        toast.error('Failed to verify your approval status. Please try again.');
+        return;
+      }
+    }
+
     if (!files || files.length === 0) {
       toast.error('Please upload at least one image');
       return;
@@ -143,10 +158,34 @@ const PropertyAdd: React.FC = () => {
                       <i className="fas fa-clock me-2"></i>
                       Approval Pending
                     </h5>
-                    <p className="mb-0">
+                    <p className="mb-2">
                       Your account is pending admin approval. Once approved, you'll be able to post properties. 
                       Please check back soon or contact support for more information.
                     </p>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-warning"
+                      onClick={async () => {
+                        setCheckingApproval(true);
+                        try {
+                          const response = await adminService.getUserApprovalStatus();
+                          setIsApproved(response.canPostProperties || false);
+                          if (response.canPostProperties) {
+                            toast.success('Great! Your account has been approved!');
+                          } else {
+                            toast.error('Your account is still pending approval.');
+                          }
+                        } catch (error) {
+                          console.error('Failed to check approval status:', error);
+                          toast.error('Failed to check approval status');
+                        } finally {
+                          setCheckingApproval(false);
+                        }
+                      }}
+                    >
+                      <i className="fas fa-refresh me-1"></i>
+                      Check Again
+                    </button>
                   </div>
                 ) : null}
 

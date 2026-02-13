@@ -15,6 +15,8 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
+import rentalRoutes from './routes/rentalRoutes.js';
 import { User } from './models/User.js';
 
 const app = express();
@@ -180,6 +182,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/maintenance-requests', maintenanceRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/rentals', rentalRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
