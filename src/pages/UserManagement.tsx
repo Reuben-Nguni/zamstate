@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import apiClient from '../utils/api';
+import toast from 'react-hot-toast';
 import '../styles/admin.scss';
 
 interface AdminUser {
@@ -20,6 +21,9 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<AdminUser | null>(null);
 
   // Fetch pending users
   const fetchPendingUsers = async () => {
@@ -77,6 +81,30 @@ const UserManagement: React.FC = () => {
       console.error('Failed to reject user:', error);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleDeleteClick = (user: AdminUser) => {
+    setSelectedForDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedForDelete) return;
+    const userId = selectedForDelete._id;
+    setDeleteLoading(userId);
+    try {
+      await apiClient(`/admin/users/${userId}`, { method: 'DELETE' });
+      toast.success('User deleted successfully');
+      setShowDeleteModal(false);
+      setSelectedForDelete(null);
+      await Promise.all([fetchPendingUsers(), fetchAllUsers()]);
+    } catch (err: any) {
+      console.error('Failed to delete user:', err);
+      const message = err?.message || 'Failed to delete user';
+      toast.error(message);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -225,6 +253,13 @@ const UserManagement: React.FC = () => {
                               : 'Approve'}
                           </button>
                         )}
+                        <button
+                          className="btn btn-danger ms-2"
+                          onClick={() => handleDeleteClick(u)}
+                          disabled={deleteLoading === u._id}
+                        >
+                          {deleteLoading === u._id ? 'Deleting...' : 'Delete'}
+                        </button>
                       </>
                     )}
                   </div>
@@ -232,6 +267,29 @@ const UserManagement: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedForDelete && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowDeleteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to permanently delete <strong>{selectedForDelete.firstName} {selectedForDelete.lastName}</strong> ({selectedForDelete.email})?</p>
+                <p className="text-danger">This action cannot be undone and will remove all associated data.</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)} disabled={deleteLoading !== null}>Cancel</button>
+                <button className="btn btn-danger" onClick={confirmDelete} disabled={deleteLoading !== null}>
+                  {deleteLoading === selectedForDelete._id ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

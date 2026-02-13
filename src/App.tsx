@@ -29,6 +29,7 @@ import Settings from './pages/Settings';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import UserManagement from './pages/UserManagement';
+import UserDeletion from './pages/UserDeletion';
 import OwnerExpenses from './pages/OwnerExpenses';
 import OwnerRentals from './pages/OwnerRentals';
 import InstallPrompt from './components/InstallPrompt';
@@ -154,6 +155,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRoles={['admin']}>
                     <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users/delete"
+                element={
+                  <ProtectedRoute requiredRoles={['admin']}>
+                    <UserDeletion />
                   </ProtectedRoute>
                 }
               />

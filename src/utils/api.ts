@@ -140,6 +140,8 @@ export const adminService = {
     apiClient(`/admin/users/${userId}/approve`, { method: 'PUT' }),
   rejectUser: (userId: string) =>
     apiClient(`/admin/users/${userId}/reject`, { method: 'PUT' }),
+  deleteUser: (userId: string) =>
+    apiClient(`/admin/users/${userId}`, { method: 'DELETE' }),
   getUserApprovalStatus: () =>
     apiClient('/admin/approval-status'),
 };

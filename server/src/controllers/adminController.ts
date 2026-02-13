@@ -86,3 +86,34 @@ export const getUserApprovalStatus = async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Delete a user from the system (admin only)
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    // Prevent deletion of the requesting admin
+    if (userId === (req as any).user?.id) {
+      return res.status(400).json({ message: 'Cannot delete your own account' });
+    }
+    
+    // Prevent deletion of other admins
+    const userToDelete = await User.findById(userId);
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (userToDelete.role === 'admin') {
+      return res.status(403).json({ message: 'Cannot delete admin accounts' });
+    }
+    
+    await User.findByIdAndDelete(userId);
+    
+    res.json({ 
+      message: 'User deleted successfully',
+      deletedUserId: userId
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};

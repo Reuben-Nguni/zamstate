@@ -6,6 +6,7 @@ import {
   approveUser,
   rejectUser,
   getUserApprovalStatus,
+  deleteUser,
 } from '../controllers/adminController.js';
 
 const router = Router();
@@ -26,5 +27,6 @@ router.get('/users', authenticate, adminOnly, getAllUsers);
 router.get('/users/pending', authenticate, adminOnly, getPendingUsers);
 router.put('/users/:userId/approve', authenticate, adminOnly, approveUser);
 router.put('/users/:userId/reject', authenticate, adminOnly, rejectUser);
+router.delete('/users/:userId', authenticate, adminOnly, deleteUser);
 
 export default router;
