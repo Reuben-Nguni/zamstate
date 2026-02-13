@@ -18,14 +18,14 @@ router.use(authenticate);
 // Create new expense
 router.post('/', createExpense);
 
-// Get all expenses for owner (across all properties)
-router.get('/', getOwnerExpenses);
-
-// Get expense summary/analytics
+// Get expense summary/analytics (must be BEFORE :expenseId route to avoid conflicts)
 router.get('/summary', getExpenseSummary);
 
-// Get expenses for specific property
+// Get expenses for specific property (must be BEFORE :expenseId route)
 router.get('/property/:propertyId', getExpensesByProperty);
+
+// Get all expenses for owner (across all properties)
+router.get('/', getOwnerExpenses);
 
 // Update expense
 router.put('/:expenseId', updateExpense);

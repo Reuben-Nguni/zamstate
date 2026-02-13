@@ -99,6 +99,7 @@ export const messageService = {
 export const userService = {
   getPresence: () => apiClient('/users/presence'),
   uploadAvatar: (formData: FormData) => apiClient('/cloudinary/upload', { method: 'POST', headers: {}, body: formData }),
+  getTenants: () => apiClient('/users/tenants'),
 };
 
 export const analyticsService = {
@@ -126,6 +127,8 @@ export const propertyService = {
     apiClient(`/properties/${id}`, { method: 'DELETE' }),
   getPropertyBookings: (id: string) =>
     apiClient(`/properties/${id}/bookings`),
+  getOwnerProperties: () =>
+    apiClient('/properties?owner=true'),
 };
 
 export const adminService = {

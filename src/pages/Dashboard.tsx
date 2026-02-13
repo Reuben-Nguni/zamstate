@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../stores/authStore';
-import { propertyService } from '../utils/api';
+import { propertyService, expenseService, rentalService } from '../utils/api';
 import apiClient from '../utils/api';
 
 const Dashboard: React.FC = () => {
@@ -12,6 +12,9 @@ const Dashboard: React.FC = () => {
     activeBookings: 0,
     monthlyRevenue: 0,
     unreadMessages: 0,
+    totalExpenses: 0,
+    unpaidExpenses: 0,
+    activeRentals: 0,
   });
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +38,33 @@ const Dashboard: React.FC = () => {
         const convs = Array.isArray(messagesRes) ? messagesRes : (messagesRes.conversations || messagesRes.data || []);
         const unreadMessages = (convs || []).filter((c: any) => c.unreadCount > 0).length;
 
+        // Fetch expenses and rentals for owners/agents
+        let totalExpenses = 0;
+        let unpaidExpenses = 0;
+        let activeRentals = 0;
+
+        if (user?.role === 'owner' || user?.role === 'agent') {
+          try {
+            const expensesRes = await expenseService.getOwnerExpenses();
+            totalExpenses = expensesRes.stats?.totalAmount || 0;
+            unpaidExpenses = expensesRes.stats?.unpaidAmount || 0;
+
+            const rentalsRes = await rentalService.getRentalSummary();
+            activeRentals = rentalsRes.summary?.totalActiveRentals || 0;
+          } catch (err) {
+            console.warn('Failed to fetch expenses/rentals:', err);
+          }
+        }
+
         // Set stats
         setStats({
           totalProperties,
           activeBookings,
-          monthlyRevenue: 45000, // placeholder - would need actual revenue API
+          monthlyRevenue: activeRentals > 0 ? 45000 : 0, // Placeholder - calculate from rentals
           unreadMessages,
+          totalExpenses,
+          unpaidExpenses,
+          activeRentals,
         });
 
         // Fetch recent activities
@@ -87,7 +111,7 @@ const Dashboard: React.FC = () => {
         icon: 'fas fa-home',
         link: '/properties',
         color: 'primary',
-        count: '12',
+        count: String(stats.totalProperties),
       },
       {
         title: 'Bookings',
@@ -95,7 +119,7 @@ const Dashboard: React.FC = () => {
         icon: 'fas fa-calendar-check',
         link: '/bookings',
         color: 'success',
-        count: '8',
+        count: String(stats.activeBookings),
       },
       {
         title: 'Messages',
@@ -103,7 +127,7 @@ const Dashboard: React.FC = () => {
         icon: 'fas fa-comments',
         link: '/messages',
         color: 'info',
-        count: '24',
+        count: String(recentActivities.length),
       },
     ];
 
@@ -115,8 +139,30 @@ const Dashboard: React.FC = () => {
         icon: 'fas fa-tools',
         link: '/maintenance',
         color: 'warning',
-        count: '3',
+        count: '0', // Will be fetched
       });
+    }
+
+    // Add owner-specific cards for expenses and rentals
+    if (user?.role === 'owner' || user?.role === 'agent') {
+      baseCards.push(
+        {
+          title: 'Expenses',
+          description: 'Track property expenses',
+          icon: 'fas fa-money-bill-wave',
+          link: '/owner/expenses',
+          color: 'danger',
+          count: `ZK ${(stats.unpaidExpenses || 0).toLocaleString()}`,
+        },
+        {
+          title: 'Rentals',
+          description: 'Manage tenant rentals',
+          icon: 'fas fa-key',
+          link: '/owner/rentals',
+          color: 'secondary',
+          count: String(stats.activeRentals),
+        }
+      );
     }
 
     if (user?.role === 'admin' || user?.role === 'owner' || user?.role === 'agent') {
@@ -142,11 +188,11 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const quickStats = [
-    { label: 'Total Properties', value: stats.totalProperties, change: '+2', trend: 'up' },
-    { label: 'Active Bookings', value: stats.activeBookings, change: '+3', trend: 'up' },
-    { label: 'Monthly Revenue', value: `ZK ${stats.monthlyRevenue.toLocaleString()}`, change: '+12%', trend: 'up' },
-    { label: 'Messages', value: stats.unreadMessages, change: '-5', trend: 'down' },
+  const quickStats: Array<{ label: string; value: string | number; change: string; trend: 'up' | 'down' | 'neutral' }> = [
+    { label: 'Total Properties', value: stats.totalProperties, change: 'Calculated', trend: 'neutral' },
+    { label: 'Active Bookings', value: stats.activeBookings, change: 'Current', trend: 'neutral' },
+    { label: 'Monthly Revenue', value: `ZK ${stats.monthlyRevenue.toLocaleString()}`, change: 'Pending', trend: 'neutral' },
+    { label: 'Messages', value: stats.unreadMessages, change: 'Unread', trend: 'neutral' },
   ];
 
   return (
@@ -192,8 +238,10 @@ const Dashboard: React.FC = () => {
                     <div>
                       <h6 className="text-muted mb-1">{stat.label}</h6>
                       <h3 className="mb-1">{stat.value}</h3>
-                      <small className={`text-${stat.trend === 'up' ? 'success' : 'danger'}`}>
-                        <i className={`fas fa-arrow-${stat.trend} me-1`}></i>
+                      <small className={`text-${stat.trend === 'up' ? 'success' : stat.trend === 'down' ? 'danger' : 'muted'}`}>
+                        {stat.trend !== 'neutral' && (
+                          <i className={`fas fa-arrow-${stat.trend} me-1`}></i>
+                        )}
                         {stat.change}
                       </small>
                     </div>

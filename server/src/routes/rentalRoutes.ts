@@ -18,14 +18,14 @@ router.use(authenticate);
 // Create new rental
 router.post('/', createRental);
 
-// Get all rentals for owner (across all properties)
-router.get('/', getOwnerRentals);
-
-// Get rental summary
+// Get rental summary (must be BEFORE :rentalId route to avoid route conflicts)
 router.get('/summary', getRentalSummary);
 
-// Get rentals for specific property
+// Get rentals for specific property (must be BEFORE :rentalId route)
 router.get('/property/:propertyId', getRentalsByProperty);
+
+// Get all rentals for owner (across all properties)
+router.get('/', getOwnerRentals);
 
 // Update rental
 router.put('/:rentalId', updateRental);

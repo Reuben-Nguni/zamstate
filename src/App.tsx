@@ -29,6 +29,8 @@ import Settings from './pages/Settings';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import UserManagement from './pages/UserManagement';
+import OwnerExpenses from './pages/OwnerExpenses';
+import OwnerRentals from './pages/OwnerRentals';
 import InstallPrompt from './components/InstallPrompt';
 
 // Stores
@@ -152,6 +154,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRoles={['admin']}>
                     <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/expenses"
+                element={
+                  <ProtectedRoute requiredRoles={['owner', 'agent']}>
+                    <OwnerExpenses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/rentals"
+                element={
+                  <ProtectedRoute requiredRoles={['owner', 'agent']}>
+                    <OwnerRentals />
                   </ProtectedRoute>
                 }
               />
