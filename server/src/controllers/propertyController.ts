@@ -106,8 +106,9 @@ export const createProperty = async (req: Request, res: Response) => {
     try {
       const admins = await User.find({ role: 'admin' });
       const adminEmails = admins.map((a: any) => a.email).filter(Boolean);
-      const propForEmail = property.toObject ? property.toObject() : property;
-      propForEmail.ownerName = propForEmail.owner?.firstName + ' ' + propForEmail.owner?.lastName;
+      const propForEmail: any = property.toObject ? property.toObject() : property;
+      const owner: any = propForEmail.owner;
+      propForEmail.ownerName = (owner?.firstName || '') + ' ' + (owner?.lastName || '');
       await emailService.sendNewPropertyNotification(adminEmails, propForEmail);
     } catch (err) {
       console.error('[createProperty] failed to notify admins', err);

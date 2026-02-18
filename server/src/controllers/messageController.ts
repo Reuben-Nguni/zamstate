@@ -36,7 +36,8 @@ export const sendMessage = async (req: Request, res: Response) => {
     try {
       const recipient = await User.findById(recipientId);
       if (recipient && recipient.email) {
-        const inquiry = { name: message.sender.firstName || 'User', email: message.sender.email || '', message: content };
+        const sender: any = message.sender;
+        const inquiry = { name: sender.firstName || 'User', email: sender.email || '', message: content };
         await emailService.sendPropertyInquiryEmail(recipient.email, inquiry);
       }
     } catch (err) {
