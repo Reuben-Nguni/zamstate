@@ -48,11 +48,14 @@ export const register = async (req: Request, res: Response) => {
     user.emailVerificationToken = verifyToken;
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
+    // Determine base URL from request origin (falls back to configured CLIENT_URL)
+    const baseUrl = req.get('origin') || CLIENT_URL;
+
     // Send verification and welcome emails asynchronously (don't wait)
-    emailService.sendVerificationEmail(user, verifyToken).catch((err: any) => {
+    emailService.sendVerificationEmail(user, verifyToken, baseUrl).catch((err: any) => {
       console.error('[Auth] Failed to send verification email:', err?.message || err);
     });
-    emailService.sendWelcomeEmail(user).catch((err: any) => {
+    emailService.sendWelcomeEmail(user, baseUrl).catch((err: any) => {
       console.error('[Auth] Failed to send welcome email:', err?.message || err);
     });
 
@@ -89,8 +92,10 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
+    // Use request origin if available so links point to the frontend that initiated the request
+    const baseUrl = req.get('origin') || CLIENT_URL;
     // Send email asynchronously (don't wait for it)
-    emailService.sendPasswordResetEmail(user, resetToken).catch((err: any) => {
+    emailService.sendPasswordResetEmail(user, resetToken, baseUrl).catch((err: any) => {
       console.error('[Auth] Failed to send password reset email:', err?.message || err);
     });
 
@@ -162,7 +167,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
     await user.save();
 
     // Send welcome email asynchronously (don't wait)
-    emailService.sendWelcomeEmail(user).catch((err: any) => {
+    const welcomeBase = req.get('origin') || CLIENT_URL;
+    emailService.sendWelcomeEmail(user, welcomeBase).catch((err: any) => {
       console.error('[Auth] Failed to send welcome email:', err?.message || err);
     });
 
@@ -189,8 +195,9 @@ export const resendVerification = async (req: Request, res: Response) => {
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
     
+    const baseUrl = req.get('origin') || CLIENT_URL;
     // Send email asynchronously (don't wait)
-    emailService.sendVerificationEmail(user, verifyToken).catch((err: any) => {
+    emailService.sendVerificationEmail(user, verifyToken, baseUrl).catch((err: any) => {
       console.error('[Auth] Failed to send verification email:', err?.message || err);
     });
 
