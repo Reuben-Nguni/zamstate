@@ -52,6 +52,7 @@ export const sendWelcomeEmail = async (user: any, baseUrl?: string) => {
 export const sendPasswordResetEmail = async (user: any, token: string, baseUrl?: string) => {
   const client = baseUrl || CLIENT_URL;
   const link = `${client}/reset-password?token=${encodeURIComponent(token)}`;
+  console.log(`[EmailService] Password reset link for ${user.email}: ${link}`);
   const html = wrapTemplate('Reset your password', `
     <p>Hi ${user.firstName},</p>
     <p>Click the button below to reset your password. This link expires in 15 minutes.</p>
