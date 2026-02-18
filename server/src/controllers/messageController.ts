@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { Message, Conversation } from '../models/Message.js';
+import { User } from '../models/User.js';
+import emailService from '../services/emailService.js';
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
@@ -28,6 +30,17 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     await message.save();
     await message.populate('sender');
+
+    // Send email notification to recipient about new inquiry/message
+    try {
+      const recipient = await User.findById(recipientId);
+      if (recipient && recipient.email) {
+        const inquiry = { name: message.sender.firstName || 'User', email: message.sender.email || '', message: content };
+        await emailService.sendPropertyInquiryEmail(recipient.email, inquiry);
+      }
+    } catch (err) {
+      console.error('[MessageController] failed to send inquiry email', err);
+    }
 
     res.status(201).json({
       message: 'Message sent successfully',

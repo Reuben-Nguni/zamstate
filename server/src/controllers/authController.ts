@@ -8,7 +8,7 @@ import {
   comparePassword,
 } from '../utils/jwt.js';
 import { validationResult } from 'express-validator';
-import { sendEmail } from '../utils/mailer.js';
+import emailService from '../services/emailService.js';
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -42,17 +42,16 @@ export const register = async (req: Request, res: Response) => {
 
     await user.save();
 
-    // Send verification email (token expires in 24h)
+    // Send verification email (token expires in 24h) and store token
     const verifyToken = generateActionToken(user._id.toString(), 'verify', '24h');
-    const verifyLink = `${CLIENT_URL}/verify-email?token=${verifyToken}`;
-    const html = `<p>Hi ${user.firstName},</p>
-      <p>Please verify your email by clicking the link below:</p>
-      <p><a href="${verifyLink}">Verify email</a></p>
-      <p>If you didn't sign up, ignore this email.</p>`;
+    user.emailVerificationToken = verifyToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
     try {
-      await sendEmail(user.email, 'Verify your email', html);
+      await emailService.sendVerificationEmail(user, verifyToken);
+      await emailService.sendWelcomeEmail(user);
     } catch (err) {
-      console.error('Failed sending verification email', err);
+      console.error('Failed sending verification/welcome email', err);
     }
 
     // Generate auth token for immediate use (optional)
@@ -84,12 +83,11 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
     if (!user) return res.json({ message: 'If the email exists, a reset link was sent.' });
 
     const resetToken = generateActionToken(user._id.toString(), 'reset', '15m');
-    const resetLink = `${CLIENT_URL}/reset-password?token=${resetToken}`;
-    const html = `<p>Hi ${user.firstName},</p>
-      <p>Click the link below to reset your password (expires in 15 minutes):</p>
-      <p><a href="${resetLink}">Reset password</a></p>`;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
     try {
-      await sendEmail(user.email, 'Password reset request', html);
+      await emailService.sendPasswordResetEmail(user, resetToken);
     } catch (err) {
       console.error('Error sending reset email', err);
     }
@@ -111,8 +109,24 @@ export const resetPassword = async (req: Request, res: Response) => {
     const user = await User.findById(payload.userId).select('+password');
     if (!user) return res.status(400).json({ message: 'User not found' });
 
+    // Verify token matches stored and not expired
+    if (!user.resetPasswordToken || user.resetPasswordToken !== token) {
+      return res.status(400).json({ message: 'Invalid or already used token' });
+    }
+    if (!user.resetPasswordExpires || user.resetPasswordExpires.getTime() < Date.now()) {
+      return res.status(400).json({ message: 'Token expired' });
+    }
+
     user.password = await hashPassword(password);
+    user.resetPasswordToken = undefined as any;
+    user.resetPasswordExpires = undefined as any;
     await user.save();
+
+    try {
+      await emailService.sendPasswordResetConfirmation(user);
+    } catch (err) {
+      console.error('Failed sending reset confirmation', err);
+    }
 
     return res.json({ message: 'Password updated successfully' });
   } catch (error: any) {
@@ -131,12 +145,27 @@ export const verifyEmail = async (req: Request, res: Response) => {
     const user = await User.findById(payload.userId);
     if (!user) return res.status(400).json({ message: 'User not found' });
 
+    // Ensure token matches stored token and not expired
+    if (!user.emailVerificationToken || user.emailVerificationToken !== token) {
+      return res.status(400).json({ message: 'Invalid or already used token' });
+    }
+    if (!user.emailVerificationExpires || user.emailVerificationExpires.getTime() < Date.now()) {
+      return res.status(400).json({ message: 'Token expired' });
+    }
+
     user.isVerified = true;
     user.verified_at = new Date();
+    user.emailVerificationToken = undefined as any;
+    user.emailVerificationExpires = undefined as any;
     await user.save();
 
     // Redirect to frontend confirmation page if available
     const redirectUrl = `${CLIENT_URL}/email-verified?status=success`;
+    try {
+      await emailService.sendWelcomeEmail(user);
+    } catch (err) {
+      console.error('Failed sending welcome after verification', err);
+    }
     return res.redirect(302, redirectUrl);
   } catch (error: any) {
     const redirectUrl = `${CLIENT_URL}/email-verified?status=error&message=${encodeURIComponent(error.message)}`;
@@ -154,12 +183,11 @@ export const resendVerification = async (req: Request, res: Response) => {
     if (user.isVerified) return res.json({ message: 'User already verified' });
 
     const verifyToken = generateActionToken(user._id.toString(), 'verify', '24h');
-    const verifyLink = `${CLIENT_URL}/verify-email?token=${verifyToken}`;
-    const html = `<p>Hi ${user.firstName},</p>
-      <p>Please verify your email by clicking the link below:</p>
-      <p><a href="${verifyLink}">Verify email</a></p>`;
+    user.emailVerificationToken = verifyToken;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
     try {
-      await sendEmail(user.email, 'Verify your email', html);
+      await emailService.sendVerificationEmail(user, verifyToken);
     } catch (err) {
       console.error('Failed sending verification email', err);
     }

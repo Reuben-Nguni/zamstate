@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Property } from '../models/Property.js';
 import { Booking } from '../models/Booking.js';
 import { User } from '../models/User.js';
+import emailService from '../services/emailService.js';
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
 import path from 'path';
@@ -99,6 +100,17 @@ export const createProperty = async (req: Request, res: Response) => {
 
     await property.save();
     await property.populate('owner');
+
+    // Notify admins about new listing
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminEmails = admins.map((a: any) => a.email).filter(Boolean);
+      const propForEmail = property.toObject ? property.toObject() : property;
+      propForEmail.ownerName = propForEmail.owner?.firstName + ' ' + propForEmail.owner?.lastName;
+      await emailService.sendNewPropertyNotification(adminEmails, propForEmail);
+    } catch (err) {
+      console.error('[createProperty] failed to notify admins', err);
+    }
 
     res.status(201).json({ message: 'Property created successfully', property });
   } catch (error: any) {
