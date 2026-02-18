@@ -1,5 +1,5 @@
 import { User } from '../models/User.js';
-import sendEmail from '../utils/mailer.js';
+import { sendEmail } from '../utils/mailer.js';
 
 const APP_NAME = process.env.APP_NAME || 'ZAMSTATE';
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';

@@ -8,7 +8,8 @@ import {
   comparePassword,
 } from '../utils/jwt.js';
 import { validationResult } from 'express-validator';
-import emailService from '../services/emailService.js';
+import emailServiceModule from '../services/emailService.js';
+const emailService = emailServiceModule;
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 

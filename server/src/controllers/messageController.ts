@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { Message, Conversation } from '../models/Message.js';
 import { User } from '../models/User.js';
-import emailService from '../services/emailService.js';
+import emailServiceModule from '../services/emailService.js';
+const emailService = emailServiceModule;
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
