@@ -16,7 +16,11 @@ export interface ApiRequestOptions {
 
 const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
   const { method = 'GET', body, params, headers = {} } = options;
-  const token = useAuthStore.getState().token;
+  // Get token from store first, then fall back to localStorage (in case store hasn't hydrated yet)
+  let token = useAuthStore.getState().token;
+  if (!token) {
+    token = localStorage.getItem('auth_token');
+  }
 
   // Build URL with query params
   let url = `${API_BASE_URL}${endpoint}`;
