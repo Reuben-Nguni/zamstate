@@ -48,12 +48,13 @@ export const register = async (req: Request, res: Response) => {
     user.emailVerificationToken = verifyToken;
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
-    try {
-      await emailService.sendVerificationEmail(user, verifyToken);
-      await emailService.sendWelcomeEmail(user);
-    } catch (err) {
-      console.error('Failed sending verification/welcome email', err);
-    }
+    // Send verification and welcome emails asynchronously (don't wait)
+    emailService.sendVerificationEmail(user, verifyToken).catch((err: any) => {
+      console.error('[Auth] Failed to send verification email:', err?.message || err);
+    });
+    emailService.sendWelcomeEmail(user).catch((err: any) => {
+      console.error('[Auth] Failed to send welcome email:', err?.message || err);
+    });
 
     // Generate auth token for immediate use (optional)
     const token = generateToken(user._id.toString());
@@ -87,11 +88,11 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
-    try {
-      await emailService.sendPasswordResetEmail(user, resetToken);
-    } catch (err) {
-      console.error('Error sending reset email', err);
-    }
+
+    // Send email asynchronously (don't wait for it)
+    emailService.sendPasswordResetEmail(user, resetToken).catch((err: any) => {
+      console.error('[Auth] Failed to send password reset email:', err?.message || err);
+    });
 
     return res.json({ message: 'If the email exists, a reset link was sent.' });
   } catch (error: any) {
@@ -160,13 +161,13 @@ export const verifyEmail = async (req: Request, res: Response) => {
     user.emailVerificationExpires = undefined as any;
     await user.save();
 
+    // Send welcome email asynchronously (don't wait)
+    emailService.sendWelcomeEmail(user).catch((err: any) => {
+      console.error('[Auth] Failed to send welcome email:', err?.message || err);
+    });
+
     // Redirect to frontend confirmation page if available
     const redirectUrl = `${CLIENT_URL}/email-verified?status=success`;
-    try {
-      await emailService.sendWelcomeEmail(user);
-    } catch (err) {
-      console.error('Failed sending welcome after verification', err);
-    }
     return res.redirect(302, redirectUrl);
   } catch (error: any) {
     const redirectUrl = `${CLIENT_URL}/email-verified?status=error&message=${encodeURIComponent(error.message)}`;
@@ -187,11 +188,11 @@ export const resendVerification = async (req: Request, res: Response) => {
     user.emailVerificationToken = verifyToken;
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
-    try {
-      await emailService.sendVerificationEmail(user, verifyToken);
-    } catch (err) {
-      console.error('Failed sending verification email', err);
-    }
+    
+    // Send email asynchronously (don't wait)
+    emailService.sendVerificationEmail(user, verifyToken).catch((err: any) => {
+      console.error('[Auth] Failed to send verification email:', err?.message || err);
+    });
 
     return res.json({ message: 'Verification email sent' });
   } catch (error: any) {
