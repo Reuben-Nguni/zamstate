@@ -15,19 +15,28 @@ async function brevoSend(to: string, subject: string, html: string, text?: strin
   if (text) payload.textContent = text;
 
   const headers: any = { 'Content-Type': 'application/json' };
-  if (BREVO_API_KEY) headers['api-key'] = BREVO_API_KEY;
+  if (BREVO_API_KEY) {
+    headers['api-key'] = BREVO_API_KEY;
+  } else {
+    console.warn('[Mailer] ⚠️  WARNING: BREVO_API_KEY not set, email send will fail');
+  }
 
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      console.log(`[Mailer] 📧 Brevo API: sending to ${to}, subject="${subject}", attempt ${attempt}/${maxAttempts}`);
       const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
       if (!res.ok) {
         const body = await res.text();
+        console.error(`[Mailer] ❌ Brevo API error: status=${res.status}`);
+        console.error(`[Mailer] Response body: ${body}`);
         throw new Error(`Brevo API returned ${res.status}: ${body}`);
       }
+      const responseData: any = await res.json();
+      console.log(`[Mailer] ✅ Brevo API success: email sent to ${to}, messageId=${responseData.messageId}`);
       return;
-    } catch (err) {
-      console.error(`[Mailer][Brevo] attempt ${attempt} failed:`, err);
+    } catch (err: any) {
+      console.error(`[Mailer] ❌ Attempt ${attempt}/${maxAttempts} failed:`, err?.message || err);
       if (attempt === maxAttempts) throw err;
       await new Promise((r) => setTimeout(r, attempt * 500));
     }
