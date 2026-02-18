@@ -43,10 +43,10 @@ export const register = async (req: Request, res: Response) => {
 
     await user.save();
 
-    // Send verification email (token expires in 24h) and store token
-    const verifyToken = generateActionToken(user._id.toString(), 'verify', '24h');
+    // Send verification email (token expires in 10 min) and store token
+    const verifyToken = generateActionToken(user._id.toString(), 'verify', '10m');
     user.emailVerificationToken = verifyToken;
-    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
     // Determine base URL from request origin (falls back to configured CLIENT_URL)
     const baseUrl = req.get('origin') || CLIENT_URL;
@@ -190,9 +190,9 @@ export const resendVerification = async (req: Request, res: Response) => {
     if (!user) return res.status(400).json({ message: 'User not found' });
     if (user.isVerified) return res.json({ message: 'User already verified' });
 
-    const verifyToken = generateActionToken(user._id.toString(), 'verify', '24h');
+    const verifyToken = generateActionToken(user._id.toString(), 'verify', '10m');
     user.emailVerificationToken = verifyToken;
-    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
     
     const baseUrl = req.get('origin') || CLIENT_URL;
@@ -271,5 +271,97 @@ export const updateProfile = async (req: Request, res: Response) => {
     res.json({ message: 'Profile updated', user });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    // Get user with password field
+    const user = await User.findById(req.userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify current password
+    const isMatch = await comparePassword(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash and save new password
+    user.password = await hashPassword(newPassword);
+    await user.save();
+
+    // Send confirmation email asynchronously
+    emailService.sendPasswordResetConfirmation(user).catch((err: any) => {
+      console.error('[Auth] Failed to send password change confirmation:', err?.message || err);
+    });
+
+    return res.json({ message: 'Password changed successfully' });
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateEmail = async (req: Request, res: Response) => {
+  try {
+    const { newEmail, password } = req.body;
+
+    if (!newEmail || !password) {
+      return res.status(400).json({ message: 'New email and password required' });
+    }
+
+    if (!newEmail.match(/^\S+@\S+\.\S+$/)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // Get user with password field
+    const user = await User.findById(req.userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify password
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Password is incorrect' });
+    }
+
+    // Check if new email already exists
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
+    user.email = newEmail;
+    user.isVerified = false;
+    user.emailVerificationToken = undefined as any;
+    user.emailVerificationExpires = undefined as any;
+    await user.save();
+
+    // Send verification email to new email address
+    const verifyToken = generateActionToken(user._id.toString(), 'verify', '10m');
+    user.emailVerificationToken = verifyToken;
+    user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    const baseUrl = req.get('origin') || CLIENT_URL;
+    emailService.sendVerificationEmail(user, verifyToken, baseUrl).catch((err: any) => {
+      console.error('[Auth] Failed to send verification email for email update:', err?.message || err);
+    });
+
+    return res.json({ message: `Verification email sent to ${newEmail}. Please verify to complete the email change.` });
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 };

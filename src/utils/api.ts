@@ -85,6 +85,10 @@ export const authService = {
     apiClient('/auth/reset-password', { method: 'POST', body: data }),
   resendVerification: (data: { email: string }) =>
     apiClient('/auth/resend-verification', { method: 'POST', body: data }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiClient('/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } }),
+  updateEmail: (newEmail: string, password: string) =>
+    apiClient('/auth/update-email', { method: 'POST', body: { newEmail, password } }),
 };
 
 export const messageService = {

@@ -5,6 +5,8 @@ import {
   login,
   getProfile,
   updateProfile,
+  changePassword,
+  updateEmail,
   requestPasswordReset,
   resetPassword,
   verifyEmail,
@@ -31,6 +33,9 @@ router.post('/login', [body('email').isEmail(), body('password').notEmpty()], lo
 
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
+router.post('/change-password', authenticate, [body('currentPassword').notEmpty(), body('newPassword').isLength({ min: 6 })], changePassword);
+router.post('/update-email', authenticate, [body('newEmail').isEmail(), body('password').notEmpty()], updateEmail);
+router.post('/update-email', authenticate, [body('newEmail').isEmail(), body('password').notEmpty()], updateEmail);
 
 router.post('/request-password-reset', [body('email').isEmail()], passwordResetRateLimiter, requestPasswordReset);
 router.post('/reset-password', [body('token').notEmpty(), body('password').isLength({ min: 6 })], resetPassword);

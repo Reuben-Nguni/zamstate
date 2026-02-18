@@ -7,7 +7,11 @@ import toast from 'react-hot-toast';
 const Profile: React.FC = () => {
   const { updateUser } = useAuthStore();
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', whatsappNumber: '', avatar: '' });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [emailForm, setEmailForm] = useState({ newEmail: '', password: '' });
   const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [updatingEmail, setUpdatingEmail] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -31,6 +35,10 @@ const Profile: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -42,6 +50,69 @@ const Profile: React.FC = () => {
       toast.error(err.message || 'Failed to update profile');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('All password fields are required');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      toast.success('Password changed successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailForm({ ...emailForm, [e.target.name]: e.target.value });
+  };
+
+  const handleUpdateEmail = async () => {
+    const { newEmail, password } = emailForm;
+
+    if (!newEmail || !password) {
+      toast.error('Email and password are required');
+      return;
+    }
+
+    if (!newEmail.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setUpdatingEmail(true);
+    try {
+      await authService.updateEmail(newEmail, password);
+      toast.success('Email updated successfully');
+      const res = await authService.getProfile();
+      const u = res.user || res.data || res;
+      setForm({ ...form });
+      updateUser(u);
+      setEmailForm({ newEmail: '', password: '' });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update email');
+    } finally {
+      setUpdatingEmail(false);
     }
   };
 
@@ -125,6 +196,92 @@ const Profile: React.FC = () => {
         <div className="card-footer text-end">
           <button className="btn btn-secondary me-2" onClick={() => window.location.reload()} disabled={saving}>Cancel</button>
           <button className="btn btn-zambia-green text-white" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      </div>
+
+      {/* Update Email Card */}
+      <div className="card mt-4">
+        <div className="card-header">
+          <h5 className="mb-0">Update Email</h5>
+        </div>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label">New Email Address</label>
+              <input 
+                type="email" 
+                name="newEmail" 
+                className="form-control" 
+                value={emailForm.newEmail} 
+                onChange={handleEmailChange}
+                placeholder="Enter your new email address"
+              />
+            </div>
+            <div className="col-12">
+              <label className="form-label">Password</label>
+              <input 
+                type="password" 
+                name="password" 
+                className="form-control" 
+                value={emailForm.password} 
+                onChange={handleEmailChange}
+                placeholder="Enter your password to confirm"
+              />
+              <small className="text-muted">We need your password to confirm this change</small>
+            </div>
+          </div>
+        </div>
+        <div className="card-footer text-end">
+          <button className="btn btn-secondary me-2" onClick={() => setEmailForm({ newEmail: '', password: '' })} disabled={updatingEmail}>Cancel</button>
+          <button className="btn btn-zambia-green text-white" onClick={handleUpdateEmail} disabled={updatingEmail}>{updatingEmail ? 'Updating...' : 'Update Email'}</button>
+        </div>
+      </div>
+
+      {/* Change Password Card */}
+      <div className="card mt-4">
+        <div className="card-header">
+          <h5 className="mb-0">Change Password</h5>
+        </div>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label">Current Password</label>
+              <input 
+                type="password" 
+                name="currentPassword" 
+                className="form-control" 
+                value={passwordForm.currentPassword} 
+                onChange={handlePasswordChange}
+                placeholder="Enter your current password"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">New Password</label>
+              <input 
+                type="password" 
+                name="newPassword" 
+                className="form-control" 
+                value={passwordForm.newPassword} 
+                onChange={handlePasswordChange}
+                placeholder="Enter new password (min 6 characters)"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Confirm New Password</label>
+              <input 
+                type="password" 
+                name="confirmPassword" 
+                className="form-control" 
+                value={passwordForm.confirmPassword} 
+                onChange={handlePasswordChange}
+                placeholder="Confirm new password"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card-footer text-end">
+          <button className="btn btn-secondary me-2" onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })} disabled={changingPassword}>Cancel</button>
+          <button className="btn btn-zambia-green text-white" onClick={handleChangePassword} disabled={changingPassword}>{changingPassword ? 'Changing...' : 'Change Password'}</button>
         </div>
       </div>
     </div>
