@@ -64,11 +64,35 @@ const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `API Error: ${response.status}`);
+      // Safely parse error body (may be empty or not JSON)
+      let errorBody: any = null;
+      try {
+        const text = await response.text();
+        errorBody = text ? JSON.parse(text) : null;
+      } catch (e) {
+        errorBody = null;
+      }
+
+      // If unauthorized, clear stored auth and surface a clear message
+      if (response.status === 401) {
+        try {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth-storage');
+        } catch (e) {
+          // ignore
+        }
+        throw new Error((errorBody && errorBody.message) || 'Invalid or expired token');
+      }
+
+      throw new Error((errorBody && errorBody.message) || `API Error: ${response.status}`);
     }
 
-    return await response.json();
+    // Parse JSON response safely
+    try {
+      return await response.json();
+    } catch (e) {
+      return null;
+    }
   } catch (error) {
     throw error;
   }
