@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const FROM_EMAIL = process.env.BREVO_FROM || process.env.SMTP_FROM || 'no-reply@zamstate.app';
+const FROM_EMAIL = process.env.BREVO_FROM || process.env.SMTP_FROM || 'reutechhub@gmail.com';
 const FROM_NAME = process.env.BREVO_FROM_NAME || 'ZAMSTATE';
 
 async function brevoSend(to: string, subject: string, html: string, text?: string) {
