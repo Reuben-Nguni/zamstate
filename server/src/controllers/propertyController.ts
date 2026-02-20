@@ -109,7 +109,9 @@ export const createProperty = async (req: Request, res: Response) => {
       const propForEmail: any = property.toObject ? property.toObject() : property;
       const owner: any = propForEmail.owner;
       propForEmail.ownerName = (owner?.firstName || '') + ' ' + (owner?.lastName || '');
-      await emailService.sendNewPropertyNotification(adminEmails, propForEmail);
+      // Build a baseUrl from request origin or protocol+host to ensure correct links in emails
+      const baseUrl = req.get('origin') || `${req.protocol}://${req.get('host')}`;
+      await emailService.sendNewPropertyNotification(adminEmails, propForEmail, baseUrl);
     } catch (err) {
       console.error('[createProperty] failed to notify admins', err);
     }

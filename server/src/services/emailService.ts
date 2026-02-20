@@ -84,12 +84,13 @@ export const sendPropertyInquiryEmail = async (agentEmail: string, inquiry: any)
   await sendEmail(agentEmail, `New inquiry for your property — ${APP_NAME}`, html, text);
 };
 
-export const sendNewPropertyNotification = async (adminEmails: string[], property: any) => {
+export const sendNewPropertyNotification = async (adminEmails: string[], property: any, baseUrl?: string) => {
+  const client = baseUrl || CLIENT_URL;
   const html = wrapTemplate('New property listed', `
     <p>A new property was listed by ${property.ownerName || 'a user'}.</p>
     <p><strong>Title:</strong> ${property.title}</p>
     <p><strong>Price:</strong> ${property.price}</p>
-    <p><a class="btn" href="${CLIENT_URL}/properties/${property._id}">View Property</a></p>
+    <p><a class="btn" href="${client}/properties/${property._id}">View Property</a></p>
   `);
   const text = `New property listed: ${property.title} - ${property.price}`;
   for (const email of adminEmails) {
