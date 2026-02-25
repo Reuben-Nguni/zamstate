@@ -16,7 +16,7 @@ const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
 const MapView: React.FC = () => {
   const [markers, setMarkers] = useState<Array<any>>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(typeof window !== 'undefined');
   const mapRef = useRef<L.Map | null>(null);
   const socketRef = useRef<any>(null);
 
