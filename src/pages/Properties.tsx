@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { propertyService, messageService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
+import MapView from '../components/MapView';
 
 const Properties: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -313,6 +314,18 @@ const Properties: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+        </motion.div>
+
+        {/* Map */}
+        <motion.div
+          className="row mb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div className="col-12">
+            <MapView />
           </div>
         </motion.div>
 
