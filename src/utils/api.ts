@@ -212,4 +212,17 @@ export const rentalService = {
     apiClient('/rentals/summary'),
 };
 
+export const paymentService = {
+  createPayment: (data: any) => apiClient('/payments', { method: 'POST', body: data }),
+  getPayments: (filters?: any) => apiClient('/payments', { params: filters }),
+  verifyPayment: (id: string, status: string, note?: string) => apiClient(`/payments/${id}/verify`, { method: 'PUT', body: { status, note } }),
+  getPaymentAudit: (id: string) => apiClient(`/payments/${id}/audit`),
+};
+
+export const applicationService = {
+  applyToProperty: (propertyId: string, message?: string) => apiClient(`/applications/${propertyId}/apply`, { method: 'POST', body: { message } }),
+  getApplicationsForProperty: (propertyId: string) => apiClient(`/applications/${propertyId}`),
+  selectApplicant: (id: string) => apiClient(`/applications/select/${id}`, { method: 'PUT' }),
+};
+
 export default apiClient;

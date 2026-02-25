@@ -1,59 +1,43 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-const paymentSchema = new Schema(
+export interface IPayment extends Document {
+  property: mongoose.Types.ObjectId;
+  owner: mongoose.Types.ObjectId;
+  tenant: mongoose.Types.ObjectId;
+  amount: number;
+  currency: string;
+  method: 'cash' | 'mobile-money' | 'bank-transfer' | 'other';
+  status: 'pending' | 'approved' | 'rejected';
+  reference?: string;
+  proofUrl?: string;
+  audit: Array<{ action: string; by: mongoose.Types.ObjectId | null; note?: string; at: Date }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const paymentSchema = new Schema<IPayment>(
   {
-    amount: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    currency: {
-      type: String,
-      enum: ['ZMW', 'USD'],
-      default: 'ZMW',
-    },
-    type: {
-      type: String,
-      enum: ['rent', 'deposit', 'commission', 'maintenance', 'other'],
-      required: true,
-    },
-    method: {
-      type: String,
-      enum: ['mobile_money', 'bank_transfer', 'card', 'cash'],
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'processing', 'completed', 'failed', 'refunded'],
-      default: 'pending',
-    },
-    reference: String,
-    description: String,
-    payer: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    payee: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    property: {
-      type: Schema.Types.ObjectId,
-      ref: 'Property',
-    },
-    booking: {
-      type: Schema.Types.ObjectId,
-      ref: 'Booking',
-    },
-    maintenance: {
-      type: Schema.Types.ObjectId,
-      ref: 'MaintenanceRequest',
-    },
-    completedAt: Date,
+    property: { type: Schema.Types.ObjectId, ref: 'Property', required: true },
+    owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    tenant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    amount: { type: Number, required: true, min: 0 },
+    currency: { type: String, default: 'ZMW' },
+    method: { type: String, enum: ['cash', 'mobile-money', 'bank-transfer', 'other'], required: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    reference: { type: String },
+    proofUrl: { type: String },
+    audit: [
+      {
+        action: { type: String, required: true },
+        by: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+        note: { type: String },
+        at: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-export const Payment = model('Payment', paymentSchema);
+paymentSchema.index({ property: 1, owner: 1, tenant: 1, status: 1 });
+
+export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);

@@ -32,6 +32,9 @@ import UserManagement from './pages/UserManagement';
 import UserDeletion from './pages/UserDeletion';
 import OwnerExpenses from './pages/OwnerExpenses';
 import OwnerRentals from './pages/OwnerRentals';
+import OwnerPaymentDetails from './pages/OwnerPaymentDetails';
+import TenantPayments from './pages/TenantPayments';
+import Applications from './pages/Applications';
 import InstallPrompt from './components/InstallPrompt';
 
 // Stores
@@ -179,6 +182,30 @@ function App() {
                 element={
                   <ProtectedRoute requiredRoles={['owner', 'agent']}>
                     <OwnerRentals />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/owner/payment-details"
+                element={
+                  <ProtectedRoute requiredRoles={['owner', 'agent']}>
+                    <OwnerPaymentDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tenant/payments"
+                element={
+                  <ProtectedRoute requiredRoles={['tenant', 'owner', 'agent']}>
+                    <TenantPayments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/applications"
+                element={
+                  <ProtectedRoute>
+                    <Applications />
                   </ProtectedRoute>
                 }
               />
