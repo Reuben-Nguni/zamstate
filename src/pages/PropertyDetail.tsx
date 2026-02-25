@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { propertyService, messageService } from '../utils/api';
+import { propertyService, messageService, applicationService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 import BookingModal from '../components/BookingModal';
@@ -38,6 +38,9 @@ const PropertyDetail: React.FC = () => {
   const [messageContent, setMessageContent] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applicationMessage, setApplicationMessage] = useState('');
+  const [applying, setApplying] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -55,10 +58,11 @@ const PropertyDetail: React.FC = () => {
       try {
         setLoading(true);
         const data = await propertyService.getPropertyById(id);
+        if (!data) throw new Error('Empty response');
         setProperty(data.data || data);
         setEditStatus(data.data?.status || data.status || 'available');
       } catch (err: any) {
-        setError(err.message || 'Error loading property');
+        setError(err?.message || 'Error loading property');
         toast.error('Property not found');
         navigate('/properties');
       } finally {
@@ -151,6 +155,29 @@ const PropertyDetail: React.FC = () => {
   const handleLoginClick = (path: string) => {
     setShowLoginPrompt(false);
     navigate(path);
+  };
+
+  const handleApplyClick = () => {
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+    } else {
+      setShowApplyModal(true);
+    }
+  };
+
+  const submitApplication = async () => {
+    if (!property || !property._id) return;
+    try {
+      setApplying(true);
+      await applicationService.applyToProperty(property._id, applicationMessage);
+      toast.success('Application submitted successfully');
+      setShowApplyModal(false);
+      setApplicationMessage('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit application');
+    } finally {
+      setApplying(false);
+    }
   };
 
   if (loading) {
@@ -514,6 +541,15 @@ const PropertyDetail: React.FC = () => {
                           <i className="fas fa-envelope me-2"></i>
                           Contact Owner
                         </button>
+                        {isAuthenticated && user?.role === 'tenant' && property.status === 'available' && (
+                          <button
+                            className="btn btn-outline-success btn-lg"
+                            onClick={handleApplyClick}
+                          >
+                            <i className="fas fa-file-signature me-2"></i>
+                            Apply to Rent
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -687,6 +723,54 @@ const PropertyDetail: React.FC = () => {
                   disabled={sendingMessage || !messageContent.trim()}
                 >
                   {sendingMessage ? 'Sending...' : 'Send Message'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Application Modal for Tenants */}
+      {showApplyModal && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Apply for this Property</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowApplyModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p><strong>Property:</strong> {property?.title}</p>
+                <div className="mb-3">
+                  <label className="form-label">Message (optional)</label>
+                  <textarea
+                    className="form-control"
+                    rows={4}
+                    value={applicationMessage}
+                    onChange={(e) => setApplicationMessage(e.target.value)}
+                    placeholder="Introduce yourself and specify why you'd like to rent this property..."
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowApplyModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={submitApplication}
+                  disabled={applying}
+                >
+                  {applying ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
             </div>

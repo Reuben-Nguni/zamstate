@@ -1,10 +1,10 @@
 import { useAuthStore } from '../stores/authStore';
 
 // Use environment variable for API base URL (required for production)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
 
-if (!API_BASE_URL) {
-  console.error('VITE_API_BASE_URL environment variable is not set');
+if (!import.meta.env.VITE_API_BASE_URL) {
+  console.warn('VITE_API_BASE_URL not defined, falling back to ' + API_BASE_URL);
 }
 
 export interface ApiRequestOptions {

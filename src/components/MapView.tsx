@@ -16,9 +16,14 @@ const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
 const MapView: React.FC = () => {
   const [markers, setMarkers] = useState<Array<any>>([]);
-  const [isClient, setIsClient] = useState(typeof window !== 'undefined');
+  const [isClient, setIsClient] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
   const socketRef = useRef<any>(null);
+
+  // Initialize client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Fetch markers from API (defined outside useCallback to prevent loop)
   const fetchMarkers = async () => {
@@ -68,12 +73,6 @@ const MapView: React.FC = () => {
       console.warn('[MapView] Failed to load properties:', err);
     }
   };
-
-  // Hydrate on client side only and fetch once
-  useEffect(() => {
-    setIsClient(true);
-    console.log('[MapView] Client initialized');
-  }, []);
 
   // Fetch on mount
   useEffect(() => {

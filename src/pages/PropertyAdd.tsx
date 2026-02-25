@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { propertyService, adminService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
+import MapEditor from '../components/MapEditor';
 
 const PropertyAdd: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const PropertyAdd: React.FC = () => {
   const [address, setAddress] = useState('');
   const [township, setTownship] = useState('Kabulonga');
   const [bedrooms, setBedrooms] = useState<number | ''>('');
+  const [coordinates, setCoordinates] = useState<{lat:number;lng:number}|null>(null);
   const [bathrooms, setBathrooms] = useState<number | ''>('');
   const [area, setArea] = useState<number | ''>('');
   const [files, setFiles] = useState<FileList | null>(null);
@@ -110,10 +112,9 @@ const PropertyAdd: React.FC = () => {
       formData.append('currency', currency);
       formData.append('type', type);
       formData.append('status', status);
-      formData.append('location', JSON.stringify({ 
-        address,
-        township 
-      }));
+      const loc: any = { address, township };
+      if (coordinates) loc.coordinates = coordinates;
+      formData.append('location', JSON.stringify(loc));
       formData.append('features', JSON.stringify({
         bedrooms: bedrooms ? Number(bedrooms) : undefined,
         bathrooms: bathrooms ? Number(bathrooms) : undefined,
@@ -345,6 +346,17 @@ const PropertyAdd: React.FC = () => {
                         value={township} 
                         onChange={(e) => setTownship(e.target.value)}
                         required 
+                      />
+                    </div>
+
+                    {/* Map pin drop editor */}
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">Pin location (click map)</label>
+                      <MapEditor
+                        center={[ -15.3875, 28.3228 ]}
+                        zoom={12}
+                        marker={coordinates || undefined}
+                        onSelect={(lat, lng) => setCoordinates({ lat, lng })}
                       />
                     </div>
                   </div>

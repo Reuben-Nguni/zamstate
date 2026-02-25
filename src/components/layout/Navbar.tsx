@@ -97,6 +97,28 @@ const Navbar: React.FC = () => {
       );
     }
 
+    // payments for tenants and owners
+    if (user?.role === 'tenant') {
+      roleLinks.push(
+        <li className="nav-item" key="tenant-payments">
+          <Link className="nav-link" to="/tenant/payments" onClick={closeMenu}>
+            <i className="fas fa-credit-card me-1"></i>
+            Payments
+          </Link>
+        </li>
+      );
+    }
+    if (user?.role === 'owner') {
+      roleLinks.push(
+        <li className="nav-item" key="owner-payments">
+          <Link className="nav-link" to="/owner/payment-details" onClick={closeMenu}>
+            <i className="fas fa-credit-card me-1"></i>
+            Payments
+          </Link>
+        </li>
+      );
+    }
+
     if (user?.role === 'admin' || user?.role === 'owner' || user?.role === 'agent') {
       roleLinks.push(
         <li className="nav-item" key="analytics">
