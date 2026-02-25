@@ -6,16 +6,28 @@ import { propertyService, messageService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 import BookingModal from '../components/BookingModal';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface PropertyImage {
   url: string;
   caption?: string;
 }
 
+// Fix Leaflet icon paths for production
+delete (L.Icon.Default as any).prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
+  const [isClient, setIsClient] = useState(false);
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +43,10 @@ const PropertyDetail: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
 
   const isOwner = isAuthenticated && user && String(property?.owner?._id || property?.owner) === String(user.id);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -330,16 +346,36 @@ const PropertyDetail: React.FC = () => {
                     {property.location?.township || property.township}, {property.location?.city || property.city || 'Lusaka'}
                   </p>
                 </div>
-                {/* Placeholder for map - would integrate Google Maps or similar */}
-                <div 
-                  className="bg-light rounded d-flex align-items-center justify-content-center" 
-                  style={{ height: '250px' }}
-                >
-                  <div className="text-center text-muted">
-                    <i className="fas fa-map-marked-alt fa-3x mb-2"></i>
-                    <p>Map view coming soon</p>
+                {/* Property Location Map */}
+                {isClient && property.location?.coordinates?.lat && property.location?.coordinates?.lng ? (
+                  <MapContainer
+                    center={[property.location.coordinates.lat, property.location.coordinates.lng]}
+                    zoom={15}
+                    style={{ height: '250px', width: '100%', borderRadius: '0.5rem' }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+                    />
+                    <Marker position={[property.location.coordinates.lat, property.location.coordinates.lng]}>
+                      <Popup>
+                        <strong>{property.title}</strong>
+                        <br />
+                        {property.location?.address || 'Property location'}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                ) : (
+                  <div
+                    className="bg-light rounded d-flex align-items-center justify-content-center"
+                    style={{ height: '250px' }}
+                  >
+                    <div className="text-center text-muted">
+                      <i className="fas fa-map-marked-alt fa-3x mb-2"></i>
+                      <p>Map location not available</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
           </div>
