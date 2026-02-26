@@ -1,4 +1,13 @@
 export async function registerServiceWorker() {
+  // only register in production builds; avoid service worker in dev because
+  // it aggressively caches old bundles and interferes with hot navigation.
+  if (import.meta.env.DEV) {
+    console.log('Skipping service worker registration in development');
+    // also ensure any existing registrations are removed to avoid stale cache
+    await unregisterServiceWorker().catch(() => {});
+    return null;
+  }
+
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js');
