@@ -8,6 +8,7 @@ import './styles/main.scss';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import { ThemeProvider } from './contexts/ThemeContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Pages
 import Home from './pages/Home';
@@ -78,7 +79,8 @@ function App() {
           <div className="App">
             <Navbar />
             <main className="main-content">
-            <Routes>
+              <ErrorBoundary>
+                <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -209,8 +211,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-          </main>
+                </Routes>
+              </ErrorBoundary>
+            </main>
           <Footer />
           <Toaster position="top-right" />
           <InstallPrompt />
