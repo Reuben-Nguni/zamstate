@@ -285,6 +285,19 @@ const Properties: React.FC = () => {
     </motion.div>
   );
 
+  if (loading) {
+    return (
+      <div className="properties-page">
+        <div className="container-fluid py-4 text-center">
+          <div className="spinner-border text-zambia-green" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3">Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="properties-page">
       <div className="container-fluid py-4">
