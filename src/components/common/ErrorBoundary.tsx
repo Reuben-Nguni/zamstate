@@ -5,8 +5,10 @@ interface State {
   error?: Error | null;
 }
 
-class ErrorBoundary extends React.Component<{}, State> {
-  constructor(props: {}) {
+type Props = React.PropsWithChildren<{}>;
+
+class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
