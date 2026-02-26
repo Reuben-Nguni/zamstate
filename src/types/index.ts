@@ -31,6 +31,7 @@ export interface Property {
   floorPlans?: string[];
   owner: User;
   agent?: User;
+  currentTenant?: User;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +58,18 @@ export interface PropertyFeatures {
   furnished: boolean;
   petsAllowed: boolean;
   utilities: string[]; // electricity, water, internet, etc.
+}
+
+// Application types
+export interface Application {
+  id: string;
+  property: Property;
+  tenant: User;
+  message?: string;
+  attachments?: Array<{ url: string; publicId?: string }>;
+  status: 'applied' | 'withdrawn' | 'selected' | 'rejected';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Booking types

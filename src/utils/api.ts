@@ -220,7 +220,26 @@ export const paymentService = {
 };
 
 export const applicationService = {
-  applyToProperty: (propertyId: string, message?: string) => apiClient(`/applications/${propertyId}/apply`, { method: 'POST', body: { message } }),
+  // message optional, attachments can be File or File[]
+  applyToProperty: (
+    propertyId: string,
+    data: { message?: string; attachments?: File[] | FileList } | FormData
+  ) => {
+    // allow passing FormData directly or build it here
+    let body: any;
+    if (data instanceof FormData) {
+      body = data;
+    } else {
+      const form = new FormData();
+      if (data.message) form.append('message', data.message);
+      if (data.attachments) {
+        const files = Array.from(data.attachments as FileList);
+        files.forEach((file) => form.append('attachments', file));
+      }
+      body = form;
+    }
+    return apiClient(`/applications/${propertyId}/apply`, { method: 'POST', headers: {}, body });
+  },
   getApplicationsForProperty: (propertyId: string) => apiClient(`/applications/${propertyId}`),
   selectApplicant: (id: string) => apiClient(`/applications/select/${id}`, { method: 'PUT' }),
 };

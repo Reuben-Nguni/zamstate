@@ -4,6 +4,7 @@ export interface IApplication extends Document {
   property: mongoose.Types.ObjectId;
   tenant: mongoose.Types.ObjectId;
   message?: string;
+  attachments?: Array<{ url: string; publicId?: string }>;
   status: 'applied' | 'withdrawn' | 'selected' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
@@ -14,6 +15,12 @@ const applicationSchema = new Schema<IApplication>(
     property: { type: Schema.Types.ObjectId, ref: 'Property', required: true },
     tenant: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, trim: true },
+    attachments: [
+      {
+        url: String,
+        publicId: String,
+      },
+    ],
     status: { type: String, enum: ['applied', 'withdrawn', 'selected', 'rejected'], default: 'applied' },
   },
   { timestamps: true }

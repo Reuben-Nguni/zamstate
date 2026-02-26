@@ -40,28 +40,37 @@ const PropertyDetail: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applicationMessage, setApplicationMessage] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [applying, setApplying] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const isOwner = isAuthenticated && user && String(property?.owner?._id || property?.owner) === String(user.id);
+  const isCurrentTenant = isAuthenticated && user && String(property?.currentTenant) === String(user.id);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
+    // Whenever the id changes clear previous state and log for debugging
+    console.log('[PropertyDetail] fetching property for id', id);
+    setProperty(null);
+    setError(null);
+
     const fetchProperty = async () => {
       if (!id) return;
 
       try {
         setLoading(true);
         const data = await propertyService.getPropertyById(id);
+        console.log('[PropertyDetail] fetch result', data);
         if (!data) throw new Error('Empty response');
         setProperty(data.data || data);
         setEditStatus(data.data?.status || data.status || 'available');
       } catch (err: any) {
+        console.error('[PropertyDetail] fetch error', err);
         setError(err?.message || 'Error loading property');
         toast.error('Property not found');
         navigate('/properties');
@@ -169,10 +178,15 @@ const PropertyDetail: React.FC = () => {
     if (!property || !property._id) return;
     try {
       setApplying(true);
-      await applicationService.applyToProperty(property._id, applicationMessage);
+      // build form data so attachments can be sent
+      const form = new FormData();
+      if (applicationMessage) form.append('message', applicationMessage);
+      attachments.forEach((file) => form.append('attachments', file));
+      await applicationService.applyToProperty(property._id, form);
       toast.success('Application submitted successfully');
       setShowApplyModal(false);
       setApplicationMessage('');
+      setAttachments([]);
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit application');
     } finally {
@@ -547,9 +561,17 @@ const PropertyDetail: React.FC = () => {
                             onClick={handleApplyClick}
                           >
                             <i className="fas fa-file-signature me-2"></i>
-                            Apply to Rent
+                            {property.type === 'land' ? 'Apply' : 'Apply to Rent'}
                           </button>
                         )}
+                      {isCurrentTenant && (
+                        <div className="alert alert-info mt-3">
+                          You have been selected as the tenant for this property.{' '}
+                          <Link to="/messages" className="alert-link">
+                            Click here to send a message or report a problem
+                          </Link>.
+                        </div>
+                      )}
                       </>
                     )}
                   </div>
@@ -752,8 +774,26 @@ const PropertyDetail: React.FC = () => {
                     rows={4}
                     value={applicationMessage}
                     onChange={(e) => setApplicationMessage(e.target.value)}
-                    placeholder="Introduce yourself and specify why you'd like to rent this property..."
+                    placeholder="Introduce yourself and specify why you'd like to rent or buy this property..."
                   />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Attachments (optional)</label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setAttachments(Array.from(e.target.files));
+                      }
+                    }}
+                  />
+                  {attachments.length > 0 && (
+                    <small className="text-muted">
+                      {attachments.length} file{attachments.length > 1 ? 's' : ''} selected
+                    </small>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">

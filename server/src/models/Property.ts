@@ -76,6 +76,10 @@ const propertySchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    currentTenant: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     views: {
       type: Number,
       default: 0,
