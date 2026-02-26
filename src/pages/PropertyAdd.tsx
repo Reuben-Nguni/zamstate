@@ -40,6 +40,7 @@ const PropertyAdd: React.FC = () => {
         setIsApproved(response.canPostProperties || false);
       } catch (error) {
         console.error('Failed to check approval status:', error);
+        // Default to false if check fails, but allow page to render anyway
         setIsApproved(false);
       } finally {
         setCheckingApproval(false);
@@ -48,6 +49,9 @@ const PropertyAdd: React.FC = () => {
 
     if (isAuthenticated) {
       checkApproval();
+    } else {
+      // If not authenticated, stop checking
+      setCheckingApproval(false);
     }
   }, [isAuthenticated, user?.role]);
 
