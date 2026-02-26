@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 import './styles/main.scss'
-import { registerServiceWorker } from './registerServiceWorker'
+import { registerServiceWorker, unregisterServiceWorker } from './registerServiceWorker'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -15,8 +15,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 // Service worker registration is now manual to avoid caching/navigation issues.
 // Users can enable it from the Settings page if they need push notifications.
-// (previously we auto-registered in both DEV and PROD, which caused stale
-// builds and forced full page refreshes when navigating.)
+// We also explicitly unregister any previously-installed worker on every load,
+// ensuring users aren't stuck on an old version that forces full-page reloads.
 //
 // If you do want to re-enable automatic registration uncomment below.
 /*
@@ -24,3 +24,6 @@ if (import.meta.env.PROD) {
   registerServiceWorker().catch(() => {});
 }
 */
+
+// always attempt to remove stale worker (no-op if none installed)
+unregisterServiceWorker().catch(() => {});
