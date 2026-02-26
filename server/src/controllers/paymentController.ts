@@ -2,11 +2,32 @@ import { Request, Response } from 'express';
 import { Payment } from '../models/Payment.js';
 import { Property } from '../models/Property.js';
 import { User } from '../models/User.js';
+import cloudinary from '../config/cloudinary.js';
+import fs from 'fs';
 
 // Tenant submits a payment request/proof
 export const createPayment = async (req: Request, res: Response) => {
   const { propertyId, amount, currency, method, reference } = req.body;
-  const proofUrl = (req as any).body?.proofUrl || null; // accept proofUrl or file handling elsewhere
+  // accept proofUrl or file uploaded via multer
+  let proofUrl = (req as any).body?.proofUrl || null;
+  // if multer stored a file, upload to cloudinary
+  const file: any = (req as any).file;
+  if (file) {
+    try {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'zamstate/payments',
+        resource_type: 'auto',
+      });
+      proofUrl = result.secure_url;
+    } catch (e) {
+      console.warn('payment proof upload failed', e);
+    }
+    try {
+      if (file.path && fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    } catch (_e) {
+      // ignore
+    }
+  }
 
   if (!propertyId || !amount || !method) {
     return res.status(400).json({ message: 'propertyId, amount and method are required' });

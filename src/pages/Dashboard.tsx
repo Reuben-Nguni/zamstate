@@ -163,6 +163,24 @@ const Dashboard: React.FC = () => {
           count: String(stats.activeRentals),
         }
       );
+      // applications card
+      baseCards.push({
+        title: 'Applications',
+        description: 'View tenant applications',
+        icon: 'fas fa-file-alt',
+        link: '/applications',
+        color: 'primary',
+        count: 'See all',
+      });
+      // payment details card
+      baseCards.push({
+        title: 'Account Details',
+        description: 'Bank & mobile money settings',
+        icon: 'fas fa-credit-card',
+        link: '/owner/payment-details',
+        color: 'info',
+        count: 'Edit',
+      });
     }
 
     if (user?.role === 'admin' || user?.role === 'owner' || user?.role === 'agent') {

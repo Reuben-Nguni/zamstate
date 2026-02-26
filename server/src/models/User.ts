@@ -67,6 +67,18 @@ const userSchema = new Schema(
       default: false,
     },
     lastSeen: Date,
+    // Bank/mobile money details for owners/agents
+    paymentDetails: {
+      bankName: String,
+      accountNumber: String,
+      accountHolder: String,
+      mobileAccounts: [
+        {
+          provider: { type: String, enum: ['mtn', 'airtel', 'zamtel', 'other'] },
+          number: String,
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

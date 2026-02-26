@@ -213,7 +213,13 @@ export const rentalService = {
 };
 
 export const paymentService = {
-  createPayment: (data: any) => apiClient('/payments', { method: 'POST', body: data }),
+  createPayment: (data: any) => {
+    // support FormData for file upload
+    if (data instanceof FormData) {
+      return apiClient('/payments', { method: 'POST', headers: {}, body: data });
+    }
+    return apiClient('/payments', { method: 'POST', body: data });
+  },
   getPayments: (filters?: any) => apiClient('/payments', { params: filters }),
   verifyPayment: (id: string, status: string, note?: string) => apiClient(`/payments/${id}/verify`, { method: 'PUT', body: { status, note } }),
   getPaymentAudit: (id: string) => apiClient(`/payments/${id}/audit`),

@@ -117,6 +117,24 @@ const Navbar: React.FC = () => {
           </Link>
         </li>
       );
+      // link to view incoming payments (uses tenant payments page)
+      roleLinks.push(
+        <li className="nav-item" key="view-payments">
+          <Link className="nav-link" to="/tenant/payments" onClick={closeMenu}>
+            <i className="fas fa-receipt me-1"></i>
+            View Payments
+          </Link>
+        </li>
+      );
+      // link to review applications
+      roleLinks.push(
+        <li className="nav-item" key="applications-link">
+          <Link className="nav-link" to="/applications" onClick={closeMenu}>
+            <i className="fas fa-file-alt me-1"></i>
+            Applications
+          </Link>
+        </li>
+      );
     }
 
     if (user?.role === 'admin' || user?.role === 'owner' || user?.role === 'agent') {

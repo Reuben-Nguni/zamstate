@@ -6,6 +6,7 @@ const TenantPayments: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ propertyId: '', amount: '', method: 'mobile-money', reference: '' });
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -26,9 +27,21 @@ const TenantPayments: React.FC = () => {
   const handleSubmit = async () => {
     if (!form.propertyId || !form.amount) return toast.error('Property and amount required');
     try {
-      const resp: any = await paymentService.createPayment({ propertyId: form.propertyId, amount: Number(form.amount), method: form.method, reference: form.reference });
+      let resp: any;
+      if (proofFile) {
+        const formData = new FormData();
+        formData.append('propertyId', form.propertyId);
+        formData.append('amount', String(Number(form.amount)));
+        formData.append('method', form.method);
+        if (form.reference) formData.append('reference', form.reference);
+        formData.append('proof', proofFile);
+        resp = await paymentService.createPayment(formData);
+      } else {
+        resp = await paymentService.createPayment({ propertyId: form.propertyId, amount: Number(form.amount), method: form.method, reference: form.reference });
+      }
       toast.success('Payment submitted');
       setPayments((p) => [resp.payment || resp.data || resp, ...p]);
+      setProofFile(null);
     } catch (err: any) {
       toast.error(err.message || 'Failed to submit payment');
     }
@@ -59,6 +72,20 @@ const TenantPayments: React.FC = () => {
             <label className="form-label">Reference</label>
             <input name="reference" value={form.reference} onChange={handleChange} className="form-control" />
           </div>
+          <div className="col-md-3">
+            <label className="form-label">Proof (optional)</label>
+            <input
+              type="file"
+              className="form-control"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setProofFile(e.target.files[0]);
+                } else {
+                  setProofFile(null);
+                }
+              }}
+            />
+          </div>
         </div>
         <div className="text-end mt-3">
           <button className="btn btn-zambia-green" onClick={handleSubmit}>Submit Payment</button>
@@ -74,6 +101,13 @@ const TenantPayments: React.FC = () => {
                 <div>
                   <div><strong>{p.amount}</strong> {p.currency || 'ZMW'}</div>
                   <div className="text-muted small">{p.method} • {p.status}</div>
+                  {p.proofUrl && (
+                    <div>
+                      <a href={p.proofUrl} target="_blank" rel="noreferrer" className="small">
+                        View proof
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <small className="text-muted">{new Date(p.createdAt || p.created).toLocaleString()}</small>

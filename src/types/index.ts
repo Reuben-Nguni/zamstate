@@ -6,7 +6,13 @@ export interface User {
   lastName: string;
   phone: string;
   role: UserRole;
-  avatar?: string;
+  avatar?: string;  
+  paymentDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+    mobileAccounts?: Array<{ provider?: string; number?: string }>;
+  };
   isVerified: boolean;
   isApproved?: boolean;
   createdAt: Date;

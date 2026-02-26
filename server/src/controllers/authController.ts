@@ -260,11 +260,15 @@ export const getProfile = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {
-    const { firstName, lastName, phone, avatar, whatsappNumber } = req.body;
+    const { firstName, lastName, phone, avatar, whatsappNumber, paymentDetails } = req.body;
 
+    const updateData: any = { firstName, lastName, phone, avatar, whatsappNumber };
+    if (paymentDetails) {
+      updateData.paymentDetails = paymentDetails;
+    }
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { firstName, lastName, phone, avatar, whatsappNumber },
+      updateData,
       { new: true, runValidators: true }
     );
 
