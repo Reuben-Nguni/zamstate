@@ -13,7 +13,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-// Register service worker (silent failure on unsupported browsers)
-if (import.meta.env.PROD || import.meta.env.DEV) {
+// Service worker registration is now manual to avoid caching/navigation issues.
+// Users can enable it from the Settings page if they need push notifications.
+// (previously we auto-registered in both DEV and PROD, which caused stale
+// builds and forced full page refreshes when navigating.)
+//
+// If you do want to re-enable automatic registration uncomment below.
+/*
+if (import.meta.env.PROD) {
   registerServiceWorker().catch(() => {});
 }
+*/
