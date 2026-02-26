@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 import './styles/main.scss'
-import { registerServiceWorker, unregisterServiceWorker } from './registerServiceWorker'
+import { unregisterServiceWorker } from './registerServiceWorker'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
