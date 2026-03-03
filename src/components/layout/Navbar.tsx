@@ -108,7 +108,7 @@ const Navbar: React.FC = () => {
         </li>
       );
     }
-    if (user?.role === 'owner') {
+if (user?.role === 'owner' || user?.role === 'agent') {
       roleLinks.push(
         <li className="nav-item" key="owner-payments">
           <Link className="nav-link" to="/owner/payment-details" onClick={closeMenu}>
@@ -129,7 +129,11 @@ const Navbar: React.FC = () => {
       // link to review applications
       roleLinks.push(
         <li className="nav-item" key="applications-link">
-          <Link className="nav-link" to="/applications" onClick={closeMenu}>
+          <Link
+            className="nav-link"
+            to="/dashboard/owner/applications"
+            onClick={closeMenu}
+          >
             <i className="fas fa-file-alt me-1"></i>
             Applications
           </Link>

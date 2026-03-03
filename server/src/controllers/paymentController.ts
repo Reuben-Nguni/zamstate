@@ -103,17 +103,21 @@ export const createPayment = async (req: Request, res: Response) => {
   res.status(201).json({ message: 'Payment submitted', payment });
 };
 
-// Get payments for owner or tenant
+// Get payments for owner, tenant, or admin
 export const getPayments = async (req: Request, res: Response) => {
-  const { propertyId, status, paymentId } = req.query;
+  const { propertyId, status, paymentId, userId } = req.query;
   const filters: any = {};
 
   // Role-based filtering
   if (req.user && req.user.role === 'owner') {
     filters.owner = req.userId;
-  }
-  if (req.user && req.user.role === 'tenant') {
+  } else if (req.user && req.user.role === 'tenant') {
     filters.tenant = req.userId;
+  } else if (req.user && req.user.role === 'admin') {
+    // Admin can view all payments, optionally filter by userId query param
+    if (userId) {
+      filters.$or = [{ owner: userId }, { tenant: userId }];
+    }
   }
 
   // Additional filters

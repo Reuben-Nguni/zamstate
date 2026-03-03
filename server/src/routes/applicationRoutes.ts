@@ -27,8 +27,9 @@ router.get('/tenant/approved-properties', authenticate, authorize('tenant'), get
 // Tenant views ALL their applications with all statuses (must come before /:propertyId)
 router.get('/tenant/all-applications', authenticate, authorize('tenant'), getTenantAllApplications);
 
-// Owner views all applications across their properties (must come before /:propertyId)
-router.get('/owner/all-applications', authenticate, authorize('owner'), getOwnerApplications);
+// Owner (and agents acting on their behalf) views all applications across their properties
+// must come before /:propertyId
+router.get('/owner/all-applications', authenticate, authorize('owner', 'agent'), getOwnerApplications);
 
 // Get property's pending/selected applications (owner/admin only)
 router.get('/:propertyId', authenticate, getApplicationsForProperty);

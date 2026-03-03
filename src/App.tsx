@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/main.scss';
 
@@ -35,9 +36,9 @@ import OwnerExpenses from './pages/OwnerExpenses';
 import OwnerRentals from './pages/OwnerRentals';
 import OwnerPaymentDetails from './pages/OwnerPaymentDetails';
 import TenantPayments from './pages/TenantPayments';
-import Applications from './pages/Applications';
 import TenantDashboard from './pages/TenantDashboard';
 import OwnerApplicationsPanel from './pages/OwnerApplicationsPanel';
+import ApplicationsWrapper from './pages/ApplicationsWrapper';
 import PaymentVerification from './pages/PaymentVerification';
 import InstallPrompt from './components/InstallPrompt';
 
@@ -64,7 +65,28 @@ function App() {
     // initialize or reuse socket connection and emit user-connected
     const socket = initSocketConnection(user?.id);
 
+    // global handlers for owners/agents so they receive notifications anywhere
+    if (user?.role === 'owner' || user?.role === 'agent') {
+      socket.on('new-application', (data: any) => {
+        const title = data?.application?.property?.title || 'one of your properties';
+        toast.success(`New application received for ${title}`);
+      });
+      socket.on('application-updated', (data: any) => {
+        const app = data?.application;
+        if (!app) return;
+        if (app.status === 'selected') {
+          toast.success('An application has been approved');
+        } else if (app.status === 'rejected') {
+          toast.error('An application has been rejected');
+        }
+      });
+    }
+
     return () => {
+      if (user?.role === 'owner') {
+        socket.off('new-application');
+        socket.off('application-updated');
+      }
       // optionally disconnect when App unmounts; leave alive for page lifetime
       socket.disconnect();
     };
@@ -119,7 +141,7 @@ function App() {
               <Route
                 path="/dashboard/owner/applications"
                 element={
-                  <ProtectedRoute requiredRoles={["owner"]}>
+                  <ProtectedRoute requiredRoles={["owner","agent"]}>
                     <OwnerApplicationsPanel />
                   </ProtectedRoute>
                 }
@@ -230,7 +252,7 @@ function App() {
                 path="/applications"
                 element={
                   <ProtectedRoute>
-                    <Applications />
+                    <ApplicationsWrapper />
                   </ProtectedRoute>
                 }
               />

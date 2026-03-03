@@ -60,8 +60,12 @@ export const getApplicationsForProperty = async (req: Request, res: Response) =>
   const property = await Property.findById(propertyId);
   if (!property) return res.status(404).json({ message: 'Property not found' });
 
-  // Only owner or admin
-  if (String(property.owner) !== String(req.userId) && req.user?.role !== 'admin') {
+  // Only owner, agent or admin
+  if (
+    String(property.owner) !== String(req.userId) &&
+    req.user?.role !== 'admin' &&
+    req.user?.role !== 'agent'
+  ) {
     return res.status(403).json({ message: 'Not authorized' });
   }
 
@@ -77,7 +81,11 @@ export const selectApplicant = async (req: Request, res: Response) => {
   const property: any = (app as any).property;
   if (!property) return res.status(404).json({ message: 'Property not found' });
 
-  if (String(property.owner) !== String(req.userId) && req.user?.role !== 'admin') {
+  if (
+    String(property.owner) !== String(req.userId) &&
+    req.user?.role !== 'admin' &&
+    req.user?.role !== 'agent'
+  ) {
     return res.status(403).json({ message: 'Not authorized' });
   }
 
@@ -156,7 +164,11 @@ export const rejectApplicant = async (req: Request, res: Response) => {
   const property: any = (app as any).property;
   if (!property) return res.status(404).json({ message: 'Property not found' });
 
-  if (String(property.owner) !== String(req.userId) && req.user?.role !== 'admin') {
+  if (
+    String(property.owner) !== String(req.userId) &&
+    req.user?.role !== 'admin' &&
+    req.user?.role !== 'agent'
+  ) {
     return res.status(403).json({ message: 'Not authorized' });
   }
 

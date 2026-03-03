@@ -12,6 +12,12 @@ interface AdminUser {
   role: string;
   isApproved: boolean;
   createdAt: string;
+  paymentDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+    mobileAccounts?: Array<{ provider?: string; number?: string }>;
+  };
 }
 
 const UserManagement: React.FC = () => {
@@ -24,6 +30,8 @@ const UserManagement: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<AdminUser | null>(null);
+  const [showPaymentDetailsModal, setShowPaymentDetailsModal] = useState(false);
+  const [selectedUserPaymentDetails, setSelectedUserPaymentDetails] = useState<AdminUser | null>(null);
 
   // Fetch pending users
   const fetchPendingUsers = async () => {
@@ -106,6 +114,11 @@ const UserManagement: React.FC = () => {
     } finally {
       setDeleteLoading(null);
     }
+  };
+
+  const handleViewPaymentDetails = (user: AdminUser) => {
+    setSelectedUserPaymentDetails(user);
+    setShowPaymentDetailsModal(true);
   };
 
   // Only show this page to admins
@@ -253,6 +266,14 @@ const UserManagement: React.FC = () => {
                               : 'Approve'}
                           </button>
                         )}
+                        {(u.role === 'owner' || u.role === 'agent') && (
+                          <button
+                            className="btn btn-info ms-2"
+                            onClick={() => handleViewPaymentDetails(u)}
+                          >
+                            Payment Details
+                          </button>
+                        )}
                         <button
                           className="btn btn-danger ms-2"
                           onClick={() => handleDeleteClick(u)}
@@ -269,14 +290,82 @@ const UserManagement: React.FC = () => {
           )}
         </div>
       )}
+      {/* Payment Details Modal */}
+      {showPaymentDetailsModal && selectedUserPaymentDetails && (
+        <div className="modal d-block modal-overlay">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header bg-info text-white">
+                <h5 className="modal-title">
+                  Payment Account Details - {selectedUserPaymentDetails.firstName} {selectedUserPaymentDetails.lastName}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowPaymentDetailsModal(false)}
+                  title="Close payment details"
+                ></button>
+              </div>
+              <div className="modal-body">
+                {selectedUserPaymentDetails.paymentDetails && (Object.values(selectedUserPaymentDetails.paymentDetails).some(v => v)) ? (
+                  <div>
+                    {selectedUserPaymentDetails.paymentDetails.bankName && (
+                      <div className="mb-3">
+                        <h6 className="text-muted">Bank Account</h6>
+                        <p className="mb-1">
+                          <strong>Bank:</strong> {selectedUserPaymentDetails.paymentDetails.bankName}
+                        </p>
+                        <p className="mb-1">
+                          <strong>Account Number:</strong> {selectedUserPaymentDetails.paymentDetails.accountNumber}
+                        </p>
+                        <p>
+                          <strong>Account Holder:</strong> {selectedUserPaymentDetails.paymentDetails.accountHolder}
+                        </p>
+                      </div>
+                    )}
+                    {selectedUserPaymentDetails.paymentDetails.mobileAccounts && selectedUserPaymentDetails.paymentDetails.mobileAccounts.length > 0 && (
+                      <div className="mb-3">
+                        <h6 className="text-muted">Mobile Money Accounts</h6>
+                        {selectedUserPaymentDetails.paymentDetails.mobileAccounts.map((acc, idx) => (
+                          <div key={idx} className="mb-2 p-2 bg-light rounded">
+                            <strong>{acc.provider?.toUpperCase()}</strong>: {acc.number}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="alert alert-warning">
+                    No payment details configured yet.
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowPaymentDetailsModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedForDelete && (
-        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal d-block modal-overlay">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header bg-danger text-white">
                 <h5 className="modal-title">Confirm Deletion</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowDeleteModal(false)}></button>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowDeleteModal(false)}
+                  title="Close dialog"
+                ></button>
               </div>
               <div className="modal-body">
                 <p>Are you sure you want to permanently delete <strong>{selectedForDelete.firstName} {selectedForDelete.lastName}</strong> ({selectedForDelete.email})?</p>

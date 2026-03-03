@@ -42,13 +42,26 @@ const OwnerApplicationsPanel: React.FC = () => {
     // initialize socket and listen for real-time updates
     const socket = initSocketConnection(user?.id);
 
-    socket.on('new-application', () => {
+    socket.on('new-application', (data: any) => {
       toast.success('New tenant application received');
-      fetchApplications();
+      const incoming: Application | undefined = data?.application;
+      if (incoming) {
+        // prepend new application so UI updates instantly
+        setApplications((prev) => [incoming, ...prev]);
+      } else {
+        // fallback to full refresh
+        fetchApplications();
+      }
     });
 
-    socket.on('application-updated', () => {
-      // refresh list to pick up changes (status updates, etc.)
+    socket.on('application-updated', (data: any) => {
+      const updated: Application | undefined = data?.application;
+      if (updated) {
+        setApplications((prev) =>
+          prev.map((app) => (app._id === updated._id ? updated : app))
+        );
+      }
+      // refresh anyway in case some fields changed on server
       fetchApplications();
     });
 
@@ -61,8 +74,9 @@ const OwnerApplicationsPanel: React.FC = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const data = await applicationService.getOwnerApplications();
-      setApplications(data);
+      const resp: any = await applicationService.getOwnerApplications();
+      // api returns { data: [...] }
+      setApplications(resp?.data || []);
     } catch (err: any) {
       toast.error('Failed to load applications');
       console.error(err);

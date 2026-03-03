@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
         title: 'Applications',
         description: 'View tenant applications',
         icon: 'fas fa-file-alt',
-        link: '/applications',
+        link: user?.role === 'owner' || user?.role === 'agent' ? '/dashboard/owner/applications' : '/applications',
         color: 'primary',
         count: 'See all',
       });
