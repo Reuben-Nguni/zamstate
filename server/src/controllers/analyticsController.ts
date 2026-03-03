@@ -18,6 +18,11 @@ const monthsBack = (n: number) => {
 
 export const overview = async (req: Request, res: Response) => {
   try {
+    // Only admins can view full system analytics
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can view analytics' });
+    }
+
     // Basic counts
     const totalUsers = await User.countDocuments();
     const totalBookings = await Booking.countDocuments();

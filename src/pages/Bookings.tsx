@@ -31,6 +31,33 @@ const Bookings: React.FC = () => {
 
   useEffect(() => {
     fetchBookings();
+
+    // Listen for real-time booking updates
+    const socket = (window as any).socket;
+    if (socket) {
+      // Listen for new bookings
+      socket.on('new-booking-created', (bookingData: any) => {
+        console.log('📘 New booking received:', bookingData);
+        setBookings((prev) => [bookingData, ...prev]);
+        toast.success('New booking received!');
+      });
+
+      // Listen for booking status updates
+      socket.on('booking-status-updated', (data: any) => {
+        console.log('📘 Booking status updated:', data);
+        setBookings((prev) =>
+          prev.map((b) =>
+            b._id === data.bookingId ? { ...b, status: data.status } : b
+          )
+        );
+        toast.success(`Booking status updated to ${data.status}`);
+      });
+
+      return () => {
+        socket.off('new-booking-created');
+        socket.off('booking-status-updated');
+      };
+    }
   }, []);
 
   const handleCancelBooking = async (bookingId: string) => {

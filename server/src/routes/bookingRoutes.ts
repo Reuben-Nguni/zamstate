@@ -1,6 +1,8 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { Booking } from '../models/Booking.js';
+import { Property } from '../models/Property.js';
+import { getIO } from '../utils/socket.js';
 
 const router = express.Router();
 
@@ -63,8 +65,26 @@ router.post('/', authenticate, async (req, res) => {
       });
 
       await booking.save();
-      await booking.populate('property', 'title address images');
+      await booking.populate('property', 'title address images owner');
       await booking.populate('tenant', 'firstName lastName email phone');
+
+      // Emit socket event to all connected users (booking created)
+      const io = getIO();
+      io.emit('new-booking-created', booking);
+      console.log('📘 Socket: new-booking-created event emitted');
+
+      // Also notify the property owner
+      const propertyOwner = (booking.property as any)?.owner;
+      if (propertyOwner) {
+        io.to(`user-${propertyOwner}`).emit('booking-request', {
+          bookingId: booking._id,
+          property: booking.property,
+          tenant: booking.tenant,
+          date,
+          time,
+        });
+        console.log(`📘 Socket: booking-request sent to owner ${propertyOwner}`);
+      }
 
       res.status(201).json({ booking });
     } catch (error) {
@@ -88,12 +108,24 @@ router.put('/:id', authenticate, async (req, res) => {
       }
 
       const updates = req.body;
+      const oldStatus = booking.status;
       Object.assign(booking, updates);
 
       await booking.save();
       await booking.populate('property', 'title address images');
       await booking.populate('tenant', 'firstName lastName email phone');
       await booking.populate('agent', 'firstName lastName email phone');
+
+      // Emit socket event if status changed
+      if (oldStatus !== booking.status) {
+        const io = getIO();
+        io.emit('booking-status-updated', {
+          bookingId: booking._id,
+          status: booking.status,
+          oldStatus,
+        });
+        console.log(`📘 Socket: booking-status-updated - ${oldStatus} -> ${booking.status}`);
+      }
 
       res.json({ booking });
     } catch (error) {

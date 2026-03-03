@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsService } from '../utils/api';
+import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30d');
+  const [authorized, setAuthorized] = useState(true);
 
   // Mock data - replace with API call
   const [revenueData, setRevenueData] = useState<any[]>([]);
@@ -46,8 +48,14 @@ const Analytics: React.FC = () => {
         setUserGrowthData(data.userGrowthData || []);
         setMaintenanceData(data.maintenanceData || []);
         setTownshipData(data.townshipData || []);
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Failed to load analytics:', err);
+        if (err.response?.status === 403) {
+          setAuthorized(false);
+          toast.error('Only admins can view analytics');
+        } else {
+          toast.error('Failed to load analytics');
+        }
       }
     };
     fetch();
@@ -56,6 +64,14 @@ const Analytics: React.FC = () => {
   return (
     <div className="analytics-page">
       <div className="container-fluid py-4">
+        {!authorized ? (
+          <div className="alert alert-danger mt-5 text-center" role="alert">
+            <i className="fas fa-lock me-2"></i>
+            <h4>Access Denied</h4>
+            <p className="mb-0">Only administrators can view the analytics dashboard.</p>
+          </div>
+        ) : (
+          <>
         {/* Header */}
         <motion.div
           className="row mb-4"
@@ -388,6 +404,8 @@ const Analytics: React.FC = () => {
             </div>
           </div>
         </motion.div>
+        </>
+        )}
       </div>
     </div>
   );
