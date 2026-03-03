@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import apiClient from '../utils/api';
-import BookingModal from '../components/BookingModal';
 
 const Bookings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showBookingModal, setShowBookingModal] = useState(false);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -99,18 +97,9 @@ const Bookings: React.FC = () => {
         {/* Header */}
         <div className="row mb-4">
           <div className="col-12">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h1 className="h3 mb-1">My Bookings</h1>
-                <p className="text-muted">Manage your property viewings and appointments</p>
-              </div>
-              <button 
-                className="btn btn-zambia-green"
-                onClick={() => setShowBookingModal(true)}
-              >
-                <i className="fas fa-plus me-2"></i>
-                New Booking
-              </button>
+            <div>
+              <h1 className="h3 mb-1">My Bookings</h1>
+              <p className="text-muted">Manage your property viewings and appointments</p>
             </div>
           </div>
         </div>
@@ -297,18 +286,7 @@ const Bookings: React.FC = () => {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      <AnimatePresence>
-        {showBookingModal && (
-          <BookingModal 
-            onClose={() => {
-              setShowBookingModal(false);
-              // Refresh bookings after successful booking
-              fetchBookings();
-            }}
-          />
-        )}
-      </AnimatePresence>
+
     </div>
   );
 };
