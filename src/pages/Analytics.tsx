@@ -157,20 +157,7 @@ const Analytics: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="col-lg-2 col-md-4 mb-3">
-            <div className="card h-100">
-              <div className="card-body text-center">
-                <div className="display-6 text-warning mb-2">
-                  {keyMetrics.totalUsers}
-                </div>
-                <h6 className="text-muted">Total Users</h6>
-                <small className="text-success">
-                  <i className="fas fa-arrow-up me-1"></i>
-                  +15.3%
-                </small>
-              </div>
-            </div>
-          </div>
+          {/* Total Users - Admin only */}
           <div className="col-lg-2 col-md-4 mb-3">
             <div className="card h-100">
               <div className="card-body text-center">
