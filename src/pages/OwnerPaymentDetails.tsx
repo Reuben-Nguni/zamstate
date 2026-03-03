@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
+import { authService } from '../utils/api';
 
 const OwnerPaymentDetails: React.FC = () => {
   const { user } = useAuthStore();
@@ -20,13 +21,16 @@ const OwnerPaymentDetails: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // save via update profile endpoint
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentDetails: form }),
-      });
+      // use authService so token is attached
+      const resp: any = await authService.updateProfile({ paymentDetails: form });
+      console.log('updateProfile response', resp);
       toast.success('Payment details saved');
+      // update local store user; api may return {user} or just the user object
+      const updatedUser = resp?.user || resp;
+      if (updatedUser) {
+        const { updateUser } = useAuthStore.getState();
+        updateUser(updatedUser);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
     } finally {

@@ -11,7 +11,7 @@ import path from 'path';
 export const createProperty = async (req: Request, res: Response) => {
   try {
     // Check if user is approved to post properties
-    const user = await User.findById((req as any).user?.id);
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -224,7 +224,14 @@ export const updateProperty = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    if (property.owner.toString() !== req.userId && req.user.role !== 'admin') {
+    // Determine permission: owner, admin, or assigned agent
+    const isOwner = property.owner.toString() === req.userId;
+    const isAdmin = req.user?.role === 'admin';
+    const isAgentAssigned = property.agent && property.agent.toString() === req.userId;
+    const assignedProps: any[] = (req.user && req.user.assignedProperties) || [];
+    const isAgentInAssigned = assignedProps.some((p: any) => p && p.toString() === property._id.toString());
+
+    if (!isOwner && !isAdmin && !isAgentAssigned && !isAgentInAssigned) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -272,7 +279,14 @@ export const deleteProperty = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    if (property.owner.toString() !== req.userId && req.user.role !== 'admin') {
+    // Determine permission: owner, admin, or assigned agent
+    const isOwnerDel = property.owner.toString() === req.userId;
+    const isAdminDel = req.user?.role === 'admin';
+    const isAgentAssignedDel = property.agent && property.agent.toString() === req.userId;
+    const assignedPropsDel: any[] = (req.user && req.user.assignedProperties) || [];
+    const isAgentInAssignedDel = assignedPropsDel.some((p: any) => p && p.toString() === property._id.toString());
+
+    if (!isOwnerDel && !isAdminDel && !isAgentAssignedDel && !isAgentInAssignedDel) {
       return res.status(403).json({ message: 'Access denied' });
     }
 

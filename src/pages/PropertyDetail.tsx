@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { propertyService, messageService, applicationService } from '../utils/api';
+import { propertyService, messageService, paymentService } from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 import BookingModal from '../components/BookingModal';
+import TenantApplyModal from '../components/TenantApplyModal';
+import PaymentFormModal from '../components/PaymentFormModal';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -39,9 +41,10 @@ const PropertyDetail: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [applicationMessage, setApplicationMessage] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [applying, setApplying] = useState(false);
+  // Payments for this property (tenant or owner view depends on user role)
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -81,6 +84,25 @@ const PropertyDetail: React.FC = () => {
 
     fetchProperty();
   }, [id, navigate]);
+
+  // Load payments for this property when property is loaded
+  useEffect(() => {
+    const loadPayments = async () => {
+      if (!property?._id) return;
+      try {
+        setLoadingPayments(true);
+        const resp: any = await paymentService.getPayments({ propertyId: property._id });
+        const list = resp.data || resp || [];
+        setPayments(list);
+      } catch (err) {
+        console.warn('Failed to load payments', err);
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+    loadPayments();
+  }, [property]);
+
 
   const handleContactClick = () => {
     if (!isAuthenticated) {
@@ -174,25 +196,6 @@ const PropertyDetail: React.FC = () => {
     }
   };
 
-  const submitApplication = async () => {
-    if (!property || !property._id) return;
-    try {
-      setApplying(true);
-      // build form data so attachments can be sent
-      const form = new FormData();
-      if (applicationMessage) form.append('message', applicationMessage);
-      attachments.forEach((file) => form.append('attachments', file));
-      await applicationService.applyToProperty(property._id, form);
-      toast.success('Application submitted successfully');
-      setShowApplyModal(false);
-      setApplicationMessage('');
-      setAttachments([]);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to submit application');
-    } finally {
-      setApplying(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -572,6 +575,76 @@ const PropertyDetail: React.FC = () => {
                           </Link>.
                         </div>
                       )}
+                      {/* Tenant payments panel */}
+                      {isCurrentTenant && (
+                        <div className="card mb-3">
+                          <div className="card-body">
+                            <h6 className="fw-bold">Payments & Landlord Info</h6>
+                            <p className="small text-muted mb-2">Contact and payment options for your landlord.</p>
+                            <div className="mb-2">
+                              <strong>Owner:</strong> {property.owner.firstName} {property.owner.lastName}
+                            </div>
+                            {property.owner.paymentDetails && (
+                              <div className="mb-3">
+                                {property.owner.paymentDetails.bankName && (
+                                  <div className="mb-2">
+                                    <div className="text-muted small">Bank</div>
+                                    <div>{property.owner.paymentDetails.bankName} — {property.owner.paymentDetails.accountNumber} ({property.owner.paymentDetails.accountHolder})</div>
+                                  </div>
+                                )}
+                                {property.owner.paymentDetails.mobileAccounts && property.owner.paymentDetails.mobileAccounts.length > 0 && (
+                                  <div>
+                                    <div className="text-muted small">Mobile Money</div>
+                                    {property.owner.paymentDetails.mobileAccounts.map((m: any, i: number) => (
+                                      <div key={i}>{m.provider?.toUpperCase()} — {m.number}</div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="mb-3">
+                              <button
+                                className="btn btn-zambia-green"
+                                onClick={() => setShowPaymentModal(true)}
+                              >
+                                <i className="fas fa-money-check-alt me-2"></i>
+                                Submit Payment
+                              </button>
+                            </div>
+
+                            <PaymentFormModal
+                              show={showPaymentModal}
+                              onHide={() => setShowPaymentModal(false)}
+                              propertyId={property?._id || ''}
+                              propertyTitle={property?.title || ''}
+                              propertyPrice={property?.price || 0}
+                              ownerPaymentDetails={property?.owner?.paymentDetails || {}}
+                              onSuccess={(payment) => setPayments((p) => [payment, ...p])}
+                            />
+
+                            <div>
+                              <h6 className="fw-bold">Your Payments</h6>
+                              {loadingPayments ? <p className="small">Loading...</p> : payments.length === 0 ? <p className="small text-muted">No payments</p> : (
+                                <ul className="list-group">
+                                  {payments.map((p: any) => (
+                                    <li key={p._id} className="list-group-item d-flex justify-content-between align-items-start">
+                                      <div>
+                                        <div><strong>{p.amount}</strong> {p.currency || 'ZMW'}</div>
+                                        <div className="small text-muted">{p.method} • {p.status}</div>
+                                        {p.proofUrl && (
+                                          <div><a href={p.proofUrl} target="_blank" rel="noreferrer" className="small">View proof</a></div>
+                                        )}
+                                      </div>
+                                      <div className="text-end small text-muted">{new Date(p.createdAt || p.created).toLocaleString()}</div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       </>
                     )}
                   </div>
@@ -666,11 +739,29 @@ const PropertyDetail: React.FC = () => {
                         Property Details
                       </h5>
                       <ul className="list-unstyled mb-0">
-                        <li className="d-flex justify-content-between py-2 border-bottom">
+                        <li className="d-flex flex-column flex-md-row justify-content-between py-2 border-bottom">
                           <span className="text-muted">Property Type</span>
                           <span className="fw-semibold text-capitalize">{property.type || 'N/A'}</span>
                         </li>
-                        <li className="d-flex justify-content-between py-2 border-bottom">
+                        {property._id && (
+                          <li className="d-flex flex-column flex-md-row justify-content-between py-2 border-bottom">
+                            <span className="text-muted">Property ID</span>
+                            <span className="fw-semibold text-break">
+                              {property._id}{' '}
+                              <button
+                                className="btn btn-sm btn-outline-secondary btn-copy-account"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(property._id);
+                                  toast.success('Property ID copied');
+                                }}
+                                title="Copy property ID"
+                              >
+                                <i className="fas fa-copy"></i>
+                              </button>
+                            </span>
+                          </li>
+                        )}
+                        <li className="d-flex flex-column flex-md-row justify-content-between py-2 border-bottom">
                           <span className="text-muted">Status</span>
                           <span className={`badge ${property.status === 'available' ? 'bg-success' : 'bg-secondary'}`}>
                             {property.status}
@@ -753,70 +844,12 @@ const PropertyDetail: React.FC = () => {
       )}
 
       {/* Application Modal for Tenants */}
-      {showApplyModal && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Apply for this Property</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowApplyModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <p><strong>Property:</strong> {property?.title}</p>
-                <div className="mb-3">
-                  <label className="form-label">Message (optional)</label>
-                  <textarea
-                    className="form-control"
-                    rows={4}
-                    value={applicationMessage}
-                    onChange={(e) => setApplicationMessage(e.target.value)}
-                    placeholder="Introduce yourself and specify why you'd like to rent or buy this property..."
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Attachments (optional)</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    multiple
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        setAttachments(Array.from(e.target.files));
-                      }
-                    }}
-                  />
-                  {attachments.length > 0 && (
-                    <small className="text-muted">
-                      {attachments.length} file{attachments.length > 1 ? 's' : ''} selected
-                    </small>
-                  )}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowApplyModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={submitApplication}
-                  disabled={applying}
-                >
-                  {applying ? 'Submitting...' : 'Submit Application'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TenantApplyModal
+        show={showApplyModal}
+        onHide={() => setShowApplyModal(false)}
+        propertyId={property?._id || ''}
+        propertyTitle={property?.title || ''}
+      />
 
       {/* Login Prompt Modal for Guests */}
       {showLoginPrompt && (

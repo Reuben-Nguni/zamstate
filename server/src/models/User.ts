@@ -32,6 +32,11 @@ const userSchema = new Schema(
       enum: ['tenant', 'owner', 'agent', 'investor', 'admin'],
       default: 'tenant',
     },
+    // Optional granular permissions for more flexible RBAC
+    permissions: {
+      type: [String],
+      default: [],
+    },
     avatar: {
       type: String,
       default: null,
@@ -79,6 +84,13 @@ const userSchema = new Schema(
         },
       ],
     },
+    // For agents: list of property ids they are assigned to (fast lookup)
+    assignedProperties: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Property',
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -20,6 +20,9 @@ const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
   let token = useAuthStore.getState().token;
   if (!token) {
     token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.warn('[apiClient] no auth token available for request', endpoint);
+    }
   }
 
   // Build URL with query params
@@ -73,13 +76,21 @@ const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
         errorBody = null;
       }
 
-      // If unauthorized, clear stored auth and surface a clear message
+      // If unauthorized, clear stored auth, notify store, and surface a clear message
       if (response.status === 401) {
+        console.warn('[apiClient] 401 Unauthorized, clearing auth');
         try {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth-storage');
         } catch (e) {
           // ignore
+        }
+        // also update zustand store so UI can react
+        try {
+          const { logout } = useAuthStore.getState();
+          logout();
+        } catch {
+          // if store not available or logout already triggered
         }
         throw new Error((errorBody && errorBody.message) || 'Invalid or expired token');
       }
@@ -247,7 +258,14 @@ export const applicationService = {
     return apiClient(`/applications/${propertyId}/apply`, { method: 'POST', headers: {}, body });
   },
   getApplicationsForProperty: (propertyId: string) => apiClient(`/applications/${propertyId}`),
-  selectApplicant: (id: string) => apiClient(`/applications/select/${id}`, { method: 'PUT' }),
+  selectApplicant: (id: string) => apiClient(`/applications/${id}/select`, { method: 'PUT' }),
+  rejectApplicant: (id: string) => apiClient(`/applications/${id}/reject`, { method: 'PUT' }),
+  withdrawApplication: (id: string) => apiClient(`/applications/${id}/withdraw`, { method: 'DELETE' }),
+  getTenantApprovedProperties: () => apiClient('/applications/tenant/approved-properties'),
+  getTenantAllApplications: () => apiClient('/applications/tenant/all-applications'),
+  getOwnerApplications: () => apiClient('/applications/owner/all-applications'),
+  getPropertyPaymentOptions: (propertyId: string) => apiClient(`/applications/${propertyId}/payment-options`),
+  submitPayment: (formData: FormData) => apiClient('/payments', { method: 'POST', headers: {}, body: formData }),
 };
 
 export default apiClient;

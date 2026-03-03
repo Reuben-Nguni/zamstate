@@ -3,7 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import 'express-async-errors';
 import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+// socket.io server initialized via utils to avoid circular dependencies
+import { initSocket } from './utils/socket.js';
+
 import { connectDB } from './config/database.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
@@ -19,24 +21,15 @@ import expenseRoutes from './routes/expenseRoutes.js';
 import rentalRoutes from './routes/rentalRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import applicationRoutes from './routes/applicationRoutes.js';
-import { User } from './models/User.js';
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 // Socket.IO setup
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? true // Allow all in production
-      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-});
+const io = initSocket(server);
 
-// Socket.IO connection handling
+/* Socket.IO connection handling (moved to utils)
 const connectedUsers = new Map<string, string>(); // userId -> socketId
 
 io.on('connection', (socket) => {
@@ -137,6 +130,8 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+*/
 
 // Middleware
 // Configure CORS to allow origins from env or fallbacks

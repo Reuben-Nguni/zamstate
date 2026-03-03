@@ -36,13 +36,16 @@ import OwnerRentals from './pages/OwnerRentals';
 import OwnerPaymentDetails from './pages/OwnerPaymentDetails';
 import TenantPayments from './pages/TenantPayments';
 import Applications from './pages/Applications';
+import TenantDashboard from './pages/TenantDashboard';
+import OwnerApplicationsPanel from './pages/OwnerApplicationsPanel';
+import PaymentVerification from './pages/PaymentVerification';
 import InstallPrompt from './components/InstallPrompt';
 
 // Stores
 import { useAuthStore } from './stores/authStore';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import { io } from 'socket.io-client';
 import { useEffect } from 'react';
+import { initSocketConnection } from './utils/socketClient';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -58,16 +61,11 @@ function App() {
   useAuthStore();
 
   useEffect(() => {
-    // connect socket and announce presence for the logged-in user
-    const socketUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
-    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
-    socket.on('connect', () => {
-      if (user?.id) {
-        socket.emit('user-connected', { userId: user.id });
-      }
-    });
+    // initialize or reuse socket connection and emit user-connected
+    const socket = initSocketConnection(user?.id);
 
     return () => {
+      // optionally disconnect when App unmounts; leave alive for page lifetime
       socket.disconnect();
     };
   }, [user]);
@@ -106,6 +104,31 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Role specific dashboards */}
+              <Route
+                path="/dashboard/tenant"
+                element={
+                  <ProtectedRoute requiredRoles={["tenant"]}>
+                    <TenantDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/owner/applications"
+                element={
+                  <ProtectedRoute requiredRoles={["owner"]}>
+                    <OwnerApplicationsPanel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/owner/payments"
+                element={
+                  <ProtectedRoute requiredRoles={["owner"]}>
+                    <PaymentVerification />
                   </ProtectedRoute>
                 }
               />

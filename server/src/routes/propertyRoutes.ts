@@ -36,8 +36,8 @@ router.post('/debug-upload', upload.array('images', 12), (req, res) => {
 });
 
 router.post('/', authenticate, authorize('admin', 'owner', 'agent'), upload.array('images', 12), createProperty);
-router.put('/:id', authenticate, upload.array('images', 12), updateProperty);
-router.delete('/:id', authenticate, deleteProperty);
+router.put('/:id', authenticate, authorize('admin', 'owner', 'agent'), upload.array('images', 12), updateProperty);
+router.delete('/:id', authenticate, authorize('admin', 'owner', 'agent'), deleteProperty);
 
 router.get('/:id/bookings', getPropertyBookings);
 

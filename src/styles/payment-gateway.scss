@@ -1,0 +1,113 @@
+// Payment Gateway Styles
+.payment-icon-lg {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.payment-icon-xl {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.payment-icon-xxl {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.payment-provider-card {
+  border-width: 2px;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.selected {
+    border-color: var(--success);
+    background-color: rgba(0, 128, 0, 0.05);
+  }
+}
+
+.payment-method-btn {
+  border-width: 2px;
+  border-radius: 1.5rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.payment-summary-card {
+  background-color: #f8f9fa;
+  border-radius: 1.5rem;
+  border-width: 2px;
+  padding: 2rem 1rem;
+  border-color: var(--success);
+}
+
+.payment-bank-details {
+  background-color: #fff;
+  border-width: 2px;
+  border-color: var(--success);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.payment-amount-display {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.copy-button {
+  margin-left: 0.5rem;
+}
+
+.proof-upload-zone {
+  border-width: 2px;
+  border-style: dashed;
+  border-radius: 0.5rem;
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #e9ecef;
+    border-color: var(--primary);
+  }
+}
+
+.progress-bar-step {
+  height: 4px;
+  border-radius: 2px;
+  flex-grow: 1;
+  margin: 0 0.25rem;
+}
+
+.btn-copy-account {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+.instruction-list {
+  font-size: 0.95rem;
+  padding-left: 1rem;
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.font-monospace {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.05em;
+}

@@ -8,7 +8,7 @@ yarn-error.log*
 node_modules/
 /.vite/
 dist/
-
+*.md
 # Build outputs
 /build/
 /public/build/

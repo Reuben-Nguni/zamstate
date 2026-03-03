@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { paymentService } from '../utils/api';
+import { paymentService, propertyService } from '../utils/api';
+import PaymentFormModal from '../components/PaymentFormModal';
 
 const TenantPayments: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ propertyId: '', amount: '', method: 'mobile-money', reference: '' });
-  const [proofFile, setProofFile] = useState<File | null>(null);
+
+  // state for opening payment modal
+  const [propertyIdInput, setPropertyIdInput] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentProperty, setCurrentProperty] = useState<any>(null);
+  const [propertyLoading, setPropertyLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const resp: any = await paymentService.getPayments();
+        console.log('getPayments response', resp);
         setPayments(resp.data || resp || []);
       } catch (err) {
         console.warn(err);
@@ -22,75 +28,67 @@ const TenantPayments: React.FC = () => {
     load();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async () => {
-    if (!form.propertyId || !form.amount) return toast.error('Property and amount required');
+  // load property info before opening modal
+  const openModalForProperty = async () => {
+    if (!propertyIdInput) return toast.error('Enter property ID');
     try {
-      let resp: any;
-      if (proofFile) {
-        const formData = new FormData();
-        formData.append('propertyId', form.propertyId);
-        formData.append('amount', String(Number(form.amount)));
-        formData.append('method', form.method);
-        if (form.reference) formData.append('reference', form.reference);
-        formData.append('proof', proofFile);
-        resp = await paymentService.createPayment(formData);
-      } else {
-        resp = await paymentService.createPayment({ propertyId: form.propertyId, amount: Number(form.amount), method: form.method, reference: form.reference });
-      }
-      toast.success('Payment submitted');
-      setPayments((p) => [resp.payment || resp.data || resp, ...p]);
-      setProofFile(null);
+      setPropertyLoading(true);
+      const resp: any = await propertyService.getPropertyById(propertyIdInput);
+      const prop = resp.data || resp.property || resp;
+      if (!prop || !prop._id) throw new Error('Property not found');
+      setCurrentProperty(prop);
+      setModalVisible(true);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit payment');
+      toast.error(err.message || 'Failed to load property');
+    } finally {
+      setPropertyLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = (payment: any) => {
+    setPayments((p) => [payment, ...p]);
+    setModalVisible(false);
+    setPropertyIdInput('');
+    setCurrentProperty(null);
   };
 
   return (
     <div className="container py-4">
       <h4>Payments</h4>
       <div className="card p-3 mb-3">
-        <div className="row g-3">
-          <div className="col-md-4">
+        <div className="row g-3 align-items-end">
+          <div className="col-md-6">
             <label className="form-label">Property ID</label>
-            <input name="propertyId" value={form.propertyId} onChange={handleChange} className="form-control" />
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">Amount</label>
-            <input name="amount" value={form.amount} onChange={handleChange} className="form-control" />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Method</label>
-            <select name="method" value={form.method} onChange={handleChange} className="form-select">
-              <option value="mobile-money">Mobile Money</option>
-              <option value="bank-transfer">Bank Transfer</option>
-              <option value="cash">Cash</option>
-            </select>
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Reference</label>
-            <input name="reference" value={form.reference} onChange={handleChange} className="form-control" />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Proof (optional)</label>
             <input
-              type="file"
               className="form-control"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  setProofFile(e.target.files[0]);
-                } else {
-                  setProofFile(null);
-                }
-              }}
+              placeholder="e.g. 635df12abc..."
+              value={propertyIdInput}
+              onChange={(e) => setPropertyIdInput(e.target.value)}
+              disabled={propertyLoading}
             />
           </div>
-        </div>
-        <div className="text-end mt-3">
-          <button className="btn btn-zambia-green" onClick={handleSubmit}>Submit Payment</button>
+          <div className="col-md-3">
+            <button
+              className="btn btn-zambia-green w-100"
+              onClick={openModalForProperty}
+              disabled={propertyLoading || !propertyIdInput}
+            >
+              {propertyLoading ? 'Loading...' : 'Pay Property'}
+            </button>
+          </div>
         </div>
       </div>
+      {currentProperty && (
+        <PaymentFormModal
+          show={modalVisible}
+          onHide={() => setModalVisible(false)}
+          propertyId={currentProperty._id}
+          propertyTitle={currentProperty.title || ''}
+          propertyPrice={currentProperty.price || 0}
+          ownerPaymentDetails={currentProperty.owner?.paymentDetails || {}}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       <div className="card p-3">
         <h5>Your Payments</h5>
