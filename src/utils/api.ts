@@ -12,16 +12,17 @@ export interface ApiRequestOptions {
   headers?: Record<string, string>;
   body?: any;
   params?: Record<string, any>;
+  skipAuth?: boolean;
 }
 
 const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
-  const { method = 'GET', body, params, headers = {} } = options;
+  const { method = 'GET', body, params, headers = {}, skipAuth = false } = options;
   // Get token from store first, then fall back to localStorage (in case store hasn't hydrated yet)
-  let token = useAuthStore.getState().token;
-  if (!token) {
-    token = localStorage.getItem('auth_token');
+  let token: string | null = null;
+  if (!skipAuth) {
+    token = useAuthStore.getState().token;
     if (!token) {
-      console.warn('[apiClient] no auth token available for request', endpoint);
+      token = localStorage.getItem('auth_token');
     }
   }
 
@@ -77,7 +78,8 @@ const apiClient = async (endpoint: string, options: ApiRequestOptions = {}) => {
       }
 
       // If unauthorized, clear stored auth, notify store, and surface a clear message
-      if (response.status === 401) {
+      // Only do this for authenticated requests - public requests should not trigger logout
+      if (response.status === 401 && !skipAuth) {
         console.warn('[apiClient] 401 Unauthorized, clearing auth');
         try {
           localStorage.removeItem('auth_token');
@@ -151,9 +153,9 @@ export const analyticsService = {
 
 export const propertyService = {
   getProperties: (filters?: any) =>
-    apiClient('/properties', { params: filters }),
+    apiClient('/properties', { params: filters, skipAuth: true }),
   getPropertyById: (id: string) =>
-    apiClient(`/properties/${id}`),
+    apiClient(`/properties/${id}`, { skipAuth: true }),
   createProperty: (formData: FormData) =>
     apiClient('/properties', {
       method: 'POST',

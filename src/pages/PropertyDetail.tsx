@@ -74,9 +74,13 @@ const PropertyDetail: React.FC = () => {
         setEditStatus(data.data?.status || data.status || 'available');
       } catch (err: any) {
         console.error('[PropertyDetail] fetch error', err);
-        setError(err?.message || 'Error loading property');
-        toast.error('Property not found');
-        navigate('/properties');
+        const errorMessage = err?.message || 'Error loading property';
+        setError(errorMessage);
+        if (errorMessage.toLowerCase().includes('not found')) {
+          toast.error('Property not found');
+        } else {
+          toast.error('Unable to load property details. Please refresh.');
+        }
       } finally {
         setLoading(false);
       }
@@ -85,10 +89,10 @@ const PropertyDetail: React.FC = () => {
     fetchProperty();
   }, [id, navigate]);
 
-  // Load payments for this property when property is loaded
+  // Load payments for this property when property is loaded (only for authenticated users)
   useEffect(() => {
     const loadPayments = async () => {
-      if (!property?._id) return;
+      if (!property?._id || !isAuthenticated) return;
       try {
         setLoadingPayments(true);
         const resp: any = await paymentService.getPayments({ propertyId: property._id });
@@ -101,7 +105,7 @@ const PropertyDetail: React.FC = () => {
       }
     };
     loadPayments();
-  }, [property]);
+  }, [property, isAuthenticated]);
 
 
   const handleContactClick = () => {
