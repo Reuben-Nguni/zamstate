@@ -4,8 +4,10 @@ let socket: Socket | null = null;
 
 export const initSocketConnection = (userId?: string) => {
   if (!socket) {
-    const socketUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
-    socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    const socketUrl = import.meta.env.VITE_API_BASE_URL
+      ? import.meta.env.VITE_API_BASE_URL.replace('/api', '')
+      : window.location.origin;
+    socket = io(socketUrl, { transports: ['websocket', 'polling'], reconnectionAttempts: 3 });
     socket.on('connect', () => {
       if (userId) {
         socket?.emit('user-connected', { userId });

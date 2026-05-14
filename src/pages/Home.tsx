@@ -1,47 +1,91 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { propertyService } from '../utils/api';
+import MapView from '../components/MapView';
 
 const Home: React.FC = () => {
-  const features = [
-    {
-      icon: 'fas fa-home',
-      title: 'Property Management',
-      description: 'Comprehensive property listing and management system'
-    },
-    {
-      icon: 'fas fa-calendar-check',
-      title: 'Smart Bookings',
-      description: 'AI-powered booking system with automated scheduling'
-    },
-    {
-      icon: 'fas fa-comments',
-      title: 'Real-time Messaging',
-      description: 'Seamless communication between tenants and landlords'
-    },
-    {
-      icon: 'fas fa-chart-line',
-      title: 'Analytics & Insights',
-      description: 'Data-driven insights for better decision making'
-    },
-    {
-      icon: 'fas fa-mobile-alt',
-      title: 'Mobile First',
-      description: 'Optimized for mobile devices across Zambia'
-    },
-    {
-      icon: 'fas fa-shield-alt',
-      title: 'Secure & Trusted',
-      description: 'Enterprise-grade security and reliability'
-    }
+  const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
+  const [loadingProperties, setLoadingProperties] = useState(false);
+  const [homeError, setHomeError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedTownship, setSelectedTownship] = useState('all');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
+  const [homeViewMode, setHomeViewMode] = useState<'grid' | 'map'>('grid');
+
+  const propertyTypes = [
+    { value: 'all', label: 'All Types' },
+    { value: 'apartment', label: 'Apartments' },
+    { value: 'house', label: 'Houses' },
+    { value: 'boarding-house', label: 'Boarding Houses' },
+    { value: 'office', label: 'Offices' },
+    { value: 'land', label: 'Land' },
+    { value: 'commercial', label: 'Commercial' },
   ];
 
-  const stats = [
-    { number: '10,000+', label: 'Properties Listed' },
-    { number: '50,000+', label: 'Happy Tenants' },
-    { number: '1,000+', label: 'Property Owners' },
-    { number: '500+', label: 'Real Estate Agents' }
+  const townships = [
+    { value: 'all', label: 'All Townships' },
+    { value: 'kabulonga', label: 'Kabulonga' },
+    { value: 'roma', label: 'Roma' },
+    { value: 'cbd', label: 'CBD' },
+    { value: 'woodlands', label: 'Woodlands' },
+    { value: 'kalundu', label: 'Kalundu' },
   ];
+
+  useEffect(() => {
+    const loadFeaturedProperties = async () => {
+      setLoadingProperties(true);
+      try {
+        const response = await propertyService.getProperties({ limit: 8, sortBy: 'date_desc' });
+        setFeaturedProperties(response.data || response || []);
+      } catch (err: any) {
+        setHomeError(err.message || 'Unable to load featured properties');
+      } finally {
+        setLoadingProperties(false);
+      }
+    };
+
+    loadFeaturedProperties();
+  }, []);
+
+  const filteredListings = featuredProperties.filter((property) => {
+    const title = (property.title || '').toString().toLowerCase();
+    const township = (property.location?.township || property.township || '').toString().toLowerCase();
+    const price = Number(property.price || 0);
+    const matchesSearch = title.includes(searchTerm.toLowerCase()) || township.includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === 'all' || property.type === selectedType;
+    const matchesTownship = selectedTownship === 'all' || township === selectedTownship.toLowerCase();
+    const matchesMinPrice = minPrice === '' || price >= Number(minPrice);
+    const matchesMaxPrice = maxPrice === '' || price <= Number(maxPrice);
+    return matchesSearch && matchesType && matchesTownship && matchesMinPrice && matchesMaxPrice;
+  });
+
+  const PropertyPreviewCard = ({ property }: { property: any }) => (
+    <div className="col-md-6 col-lg-3 mb-4">
+      <div className="card property-preview-card h-100 shadow-sm">
+        <img
+          src={property.images && property.images.length > 0 ? property.images[0].url || property.images[0] : '/placeholder-image.jpg'}
+          alt={property.title}
+          className="card-img-top"
+          style={{ height: '180px', objectFit: 'cover' }}
+        />
+        <div className="card-body">
+          <h5 className="card-title mb-2">{property.title || property.type || 'Property'}</h5>
+          <p className="card-text text-muted mb-2">
+            ZK {property.price ? Number(property.price).toLocaleString() : 'N/A'} / month
+          </p>
+          <p className="card-text text-muted small mb-3">
+            {property.township || property.location?.township || 'Unknown location'}
+          </p>
+          <Link to={`/properties/${property._id || property.id}`} className="btn btn-zambia-green btn-sm w-100">
+            View Property
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="home-page">
@@ -90,91 +134,139 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Hero Image & Tagline Section */}
-      <section className="hero-image-section py-5 bg-gradient-section w-100">
-        <div className="w-100 position-relative">
-          <div className="row align-items-center justify-content-center h-100 mx-0">
-            <div className="col-12 text-center px-0 position-relative hero-image-container">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="hero-image-wrapper"
-              >
-                <img
-                  src="/house-key.jpg"
-                  alt="House and Key"
-                  className="img-fluid hero-key-image"
-                  style={{
-                    maxWidth: '100%',
-                    height: 'auto',
-                    filter: 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15))',
-                  }}
-                />
-              </motion.div>
+      {/* Search & Filter Section */}
+      <section className="search-filter-section py-5 bg-light">
+        <div className="container">
+          <div className="card shadow-sm border-0">
+            <div className="card-body">
+              <div className="row g-3 align-items-end">
+                <div className="col-md-4">
+                  <label className="form-label fw-semibold">Search</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search by location or title"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label fw-semibold">Type</label>
+                  <select
+                    className="form-select"
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                  >
+                    {propertyTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label fw-semibold">Township</label>
+                  <select
+                    className="form-select"
+                    value={selectedTownship}
+                    onChange={(e) => setSelectedTownship(e.target.value)}
+                  >
+                    {townships.map((township) => (
+                      <option key={township.value} value={township.value}>
+                        {township.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label fw-semibold">Min Price</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    placeholder="ZK 0"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : '')}
+                  />
+                </div>
+                <div className="col-md-2">
+                  <label className="form-label fw-semibold">Max Price</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="form-control"
+                    placeholder="ZK 0"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : '')}
+                  />
+                </div>
+              </div>
+              <div className="row mt-3">
+                <div className="col-12 d-flex justify-content-between align-items-center">
+                  <p className="mb-0 text-muted">Showing {filteredListings.length} of {featuredProperties.length} featured properties based on your filter.</p>
+                  <div className="d-flex gap-2">
+                    <button
+                      className={`btn btn-sm ${homeViewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setHomeViewMode('grid')}
+                      title="Grid View"
+                    >
+                      <i className="fas fa-th me-1"></i>Grid
+                    </button>
+                    <button
+                      className={`btn btn-sm ${homeViewMode === 'map' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setHomeViewMode('map')}
+                      title="Map View"
+                    >
+                      <i className="fas fa-map me-1"></i>Map
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="stats-section py-5 bg-light">
+      {/* Featured Listings Section */}
+      <section className="featured-listings-section py-5 bg-white">
         <div className="container">
-          <div className="row text-center">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                className="col-md-3 mb-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="stat-card">
-                  <h2 className="text-zambia-green fw-bold mb-2">{stat.number}</h2>
-                  <p className="text-muted mb-0">{stat.label}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="features-section py-5">
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="display-5 fw-bold text-zambia-green mb-3">
-              Why Choose ZAMSTATE?
-            </h2>
-            <p className="lead text-muted">
-              Experience the future of real estate management in Zambia
-            </p>
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <h2 className="display-6 fw-bold text-zambia-green mb-1">Featured Listings</h2>
+              <p className="text-muted mb-0">Browse the newest properties, including boarding houses, homes and commercial spaces.</p>
+            </div>
+            <Link to="/properties" className="btn btn-outline-zambia-green">
+              View All Properties
+            </Link>
           </div>
 
-          <div className="row g-4">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                className="col-md-6 col-lg-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="feature-card card h-100 border-0 shadow-sm">
-                  <div className="card-body text-center p-4">
-                    <div className="feature-icon mb-3">
-                      <i className={`${feature.icon} fa-3x text-zambia-green`}></i>
-                    </div>
-                    <h5 className="card-title fw-bold mb-3">{feature.title}</h5>
-                    <p className="card-text text-muted">{feature.description}</p>
+          {homeViewMode === 'map' ? (
+            // Map View
+            <div style={{ height: '450px', marginBottom: '30px' }}>
+              <MapView properties={filteredListings} height={450} hideHeader={true} />
+            </div>
+          ) : (
+            // Grid View
+            <div className="row">
+              {loadingProperties ? (
+                <div className="col-12 text-center py-4">
+                  <div className="spinner-border text-zambia-green" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              ) : homeError ? (
+                <div className="col-12 text-center py-4 text-danger">{homeError}</div>
+              ) : filteredListings.length > 0 ? (
+                filteredListings.map((property) => (
+                  <PropertyPreviewCard key={property._id || property.id} property={property} />
+                ))
+              ) : (
+                <div className="col-12 text-center py-4 text-muted">
+                  No featured listings match your filters.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

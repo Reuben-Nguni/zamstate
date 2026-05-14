@@ -264,6 +264,7 @@ const PropertyAdd: React.FC = () => {
                         <select className="form-select form-select-lg" value={type} onChange={(e) => setType(e.target.value)}>
                           <option value="apartment">Apartment</option>
                           <option value="house">House</option>
+                          <option value="boarding-house">Boarding House</option>
                           <option value="office">Office</option>
                           <option value="land">Land</option>
                           <option value="commercial">Commercial</option>

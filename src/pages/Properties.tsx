@@ -7,10 +7,12 @@ import toast from 'react-hot-toast';
 import MapView from '../components/MapView';
 
 const Properties: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedTownship, setSelectedTownship] = useState('all');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
 
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,6 +79,7 @@ const Properties: React.FC = () => {
     { value: 'all', label: 'All Types' },
     { value: 'apartment', label: 'Apartments' },
     { value: 'house', label: 'Houses' },
+    { value: 'boarding-house', label: 'Boarding Houses' },
     { value: 'office', label: 'Offices' },
     { value: 'land', label: 'Land' },
     { value: 'commercial', label: 'Commercial' },
@@ -94,11 +97,14 @@ const Properties: React.FC = () => {
   const filteredProperties = properties.filter((property) => {
     const title = (property.title || '').toString().toLowerCase();
     const township = (property.location?.township || property.township || '').toString().toLowerCase();
+    const price = Number(property.price || 0);
     const matchesSearch = title.includes(searchTerm.toLowerCase()) || township.includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || property.type === selectedType;
     const matchesTownship = selectedTownship === 'all' || township === selectedTownship.toLowerCase();
+    const matchesMinPrice = minPrice === '' || price >= Number(minPrice);
+    const matchesMaxPrice = maxPrice === '' || price <= Number(maxPrice);
 
-    return matchesSearch && matchesType && matchesTownship;
+    return matchesSearch && matchesType && matchesTownship && matchesMinPrice && matchesMaxPrice;
   });
 
   const PropertyCard = ({ property }: { property: typeof properties[0] }) => (
@@ -330,18 +336,6 @@ const Properties: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Map */}
-        <motion.div
-          className="row mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className="col-12">
-            <MapView />
-          </div>
-        </motion.div>
-
         {/* Filters */}
         <motion.div
           className="row mb-4"
@@ -380,7 +374,27 @@ const Properties: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-md-2">
+                    <input
+                      type="number"
+                      min={0}
+                      className="form-control"
+                      placeholder="Min price"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : '')}
+                    />
+                  </div>
+                  <div className="col-md-2">
+                    <input
+                      type="number"
+                      min={0}
+                      className="form-control"
+                      placeholder="Max price"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : '')}
+                    />
+                  </div>
+                  <div className="col-md-2">
                     <select
                       className="form-select"
                       value={selectedTownship}
@@ -393,19 +407,28 @@ const Properties: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="col-md-2">
-                    <div className="btn-group w-100">
+                  <div className="col-md-3">
+                    <div className="d-flex gap-2 w-100">
                       <button
-                        className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`btn flex-grow-1 ${viewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'}`}
                         onClick={() => setViewMode('grid')}
+                        title="Grid View"
                       >
-                        <i className="fas fa-th"></i>
+                        <i className="fas fa-th me-1"></i>Grid
                       </button>
                       <button
-                        className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`btn flex-grow-1 ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'}`}
                         onClick={() => setViewMode('list')}
+                        title="List View"
                       >
-                        <i className="fas fa-list"></i>
+                        <i className="fas fa-list me-1"></i>List
+                      </button>
+                      <button
+                        className={`btn flex-grow-1 ${viewMode === 'map' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setViewMode('map')}
+                        title="Map View"
+                      >
+                        <i className="fas fa-map me-1"></i>Map
                       </button>
                     </div>
                   </div>
@@ -415,55 +438,78 @@ const Properties: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Results Count */}
-        <motion.div
-          className="row mb-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <div className="col-12">
-            {loading ? (
-              <p className="text-muted mb-0">Loading properties...</p>
-            ) : error ? (
-              <p className="text-danger mb-0">{error}</p>
-            ) : (
-              <p className="text-muted mb-0">Showing {filteredProperties.length} of {properties.length} properties</p>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Properties Grid/List */}
-        <motion.div
-          className="row"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          {filteredProperties.length > 0 ? (
-            filteredProperties.map(property => (
-              viewMode === 'grid' ? (
-                <PropertyCard key={property._id || property.id} property={property} />
-              ) : (
-                <PropertyListItem key={property._id || property.id} property={property} />
-              )
-            ))
-          ) : (
+        {/* Properties Display */}
+        {viewMode === 'map' ? (
+          // Map View
+          <motion.div
+            className="row mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
             <div className="col-12">
-              <div className="text-center py-5">
-                <i className="fas fa-home fa-3x text-muted mb-3"></i>
-                <h4 className="text-muted">No properties found</h4>
-                <p className="text-muted">Try adjusting your search criteria.</p>
-                {isAuthenticated && (
-                  <Link to="/properties/add" className="btn btn-zambia-green">
-                    <i className="fas fa-plus me-2"></i>
-                    Add Property
-                  </Link>
+              <div className="card">
+                <div className="card-body p-0" style={{ height: '500px' }}>
+                  <MapView properties={filteredProperties} />
+                </div>
+              </div>
+              <p className="text-muted mt-2 mb-0">Showing {filteredProperties.length} of {properties.length} properties on map</p>
+            </div>
+          </motion.div>
+        ) : (
+          // Grid/List View
+          <>
+            {/* Results Count */}
+            <motion.div
+              className="row mb-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="col-12">
+                {loading ? (
+                  <p className="text-muted mb-0">Loading properties...</p>
+                ) : error ? (
+                  <p className="text-danger mb-0">{error}</p>
+                ) : (
+                  <p className="text-muted mb-0">Showing {filteredProperties.length} of {properties.length} properties</p>
                 )}
               </div>
-            </div>
-          )}
-        </motion.div>
+            </motion.div>
+
+            {/* Properties Grid/List */}
+            <motion.div
+              className="row"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              {filteredProperties.length > 0 ? (
+                filteredProperties.map(property => (
+                  viewMode === 'grid' ? (
+                    <PropertyCard key={property._id || property.id} property={property} />
+                  ) : (
+                    <PropertyListItem key={property._id || property.id} property={property} />
+                  )
+                ))
+              ) : (
+                <div className="col-12">
+                  <div className="text-center py-5">
+                    <i className="fas fa-home fa-3x text-muted mb-3"></i>
+                    <h4 className="text-muted">No properties found</h4>
+                    <p className="text-muted">Try adjusting your search criteria.</p>
+                    {isAuthenticated && (
+                      <Link to="/properties/add" className="btn btn-zambia-green">
+                        <i className="fas fa-plus me-2"></i>
+                        Add Property
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
       </div>
 
       {/* Contact Modal for Authenticated Users */}
