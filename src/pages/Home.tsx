@@ -235,7 +235,7 @@ const Home: React.FC = () => {
               <h2 className="display-6 fw-bold text-zambia-green mb-1">Featured Listings</h2>
               <p className="text-muted mb-0">Browse the newest properties, including boarding houses, homes and commercial spaces.</p>
             </div>
-            <Link to="/properties" className="btn btn-outline-zambia-green">
+            <Link to="/properties" className="btn btn-zambia-green">
               View All Properties
             </Link>
           </div>
