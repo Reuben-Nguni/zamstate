@@ -22,7 +22,7 @@ const propertySchema = new Schema(
     },
     type: {
       type: String,
-      enum: ['apartment', 'house', 'office', 'land', 'commercial'],
+      enum: ['apartment', 'house', 'boarding-house', 'office', 'land', 'commercial'],
       required: true,
     },
     status: {
