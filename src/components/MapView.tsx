@@ -114,7 +114,17 @@ const MapView: React.FC<MapViewProps> = ({ properties: externalProperties, heigh
               attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
             />
             {markers.map((m) => (
-              <Marker key={m.id} position={[m.lat, m.lng]}>
+              <Marker
+                key={m.id}
+                position={[m.lat, m.lng]}
+                eventHandlers={{
+                  click: () => {
+                    // also open Google Maps directly when the marker pin is clicked
+                    const url = `https://www.google.com/maps?q=${m.lat},${m.lng}`;
+                    window.open(url, '_blank');
+                  },
+                }}
+              >
                 <Popup>
                   <div style={{ minWidth: 220, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                     <strong style={{ fontSize: '1.05rem', color: '#333' }}>{m.title}</strong>

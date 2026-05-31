@@ -8,7 +8,6 @@ const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30d');
   const [authorized, setAuthorized] = useState(true);
 
-  // Mock data - replace with API call
   const [revenueData, setRevenueData] = useState<any[]>([]);
 
   const [propertyTypeData, setPropertyTypeData] = useState<any[]>([]);

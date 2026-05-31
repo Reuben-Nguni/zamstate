@@ -56,34 +56,32 @@ const Dashboard: React.FC = () => {
           }
         }
 
-        // Set stats
+        // Set stats (monthlyRevenue derived from rentals summary or payments)
+        const monthlyRevenue =
+          (rentalsRes.summary && rentalsRes.summary.monthlyRevenue) ||
+          (rentalsRes.summary && rentalsRes.summary.totalRevenue) ||
+          0;
+
         setStats({
           totalProperties,
           activeBookings,
-          monthlyRevenue: activeRentals > 0 ? 45000 : 0, // Placeholder - calculate from rentals
+          monthlyRevenue,
           unreadMessages,
           totalExpenses,
           unpaidExpenses,
           activeRentals,
         });
 
-        // Fetch recent activities
+        // Fetch recent activities (sourced from bookings in the database)
         const activitiesRes = await apiClient('/bookings');
-        const mockActivities = [
-          {
-            type: 'booking',
-            message: `You have ${activeBookings} active bookings`,
-            time: 'Just now',
-            icon: 'fas fa-calendar-plus',
-          },
-          ...((activitiesRes.bookings || []).slice(0, 3).map((b: any) => ({
-            type: 'booking',
-            message: `Booking for "${b.property?.title || 'Property'}" - ${b.status}`,
-            time: new Date(b.createdAt).toLocaleDateString(),
-            icon: 'fas fa-calendar-check',
-          })) || []),
-        ];
-        setRecentActivities(mockActivities);
+        const bookingsList = (activitiesRes.bookings || []).slice(0, 5).map((b: any) => ({
+          type: 'booking',
+          message: `Booking for "${b.property?.title || 'Property'}" - ${b.status}`,
+          time: b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'Unknown',
+          icon: 'fas fa-calendar-check',
+        }));
+
+        setRecentActivities(bookingsList);
       } catch (err: any) {
         console.warn('Failed to fetch dashboard data:', err.message);
         // Fallback to default state

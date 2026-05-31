@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 import './styles/main.scss'
-import { unregisterServiceWorker } from './registerServiceWorker'
+import { unregisterServiceWorker, registerServiceWorker } from './registerServiceWorker'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -26,4 +26,10 @@ if (import.meta.env.PROD) {
 */
 
 // always attempt to remove stale worker (no-op if none installed)
-unregisterServiceWorker().catch(() => {});
+// Register service worker in production builds to enable PWA behavior
+if (import.meta.env.PROD) {
+  registerServiceWorker().catch(() => {});
+} else {
+  // ensure no stale worker during development
+  unregisterServiceWorker().catch(() => {});
+}
