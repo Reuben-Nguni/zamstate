@@ -42,6 +42,8 @@ const Dashboard: React.FC = () => {
         let totalExpenses = 0;
         let unpaidExpenses = 0;
         let activeRentals = 0;
+        let rentalsSummary: any = null;
+        let monthlyRevenue = 0;
 
         if (user?.role === 'owner' || user?.role === 'agent') {
           try {
@@ -50,17 +52,14 @@ const Dashboard: React.FC = () => {
             unpaidExpenses = expensesRes.stats?.unpaidAmount || 0;
 
             const rentalsRes = await rentalService.getRentalSummary();
-            activeRentals = rentalsRes.summary?.totalActiveRentals || 0;
+            rentalsSummary = rentalsRes.summary || null;
+            activeRentals = rentalsSummary?.totalActiveRentals || 0;
+            monthlyRevenue = rentalsSummary?.monthlyRevenue ||
+              rentalsSummary?.totalRevenue || 0;
           } catch (err) {
             console.warn('Failed to fetch expenses/rentals:', err);
           }
         }
-
-        // Set stats (monthlyRevenue derived from rentals summary or payments)
-        const monthlyRevenue =
-          (rentalsRes.summary && rentalsRes.summary.monthlyRevenue) ||
-          (rentalsRes.summary && rentalsRes.summary.totalRevenue) ||
-          0;
 
         setStats({
           totalProperties,
